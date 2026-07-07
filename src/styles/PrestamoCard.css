@@ -1,0 +1,154 @@
+.prestamo-card {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    min-width: 0;
+}
+
+.vehicle-image {
+    width: 84px;
+    height: 108px;
+    border-radius: 10px;
+    background: #eef2ff;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.vehicle-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.vehicle-placeholder {
+    width: 100%;
+    height: 100%;
+    color: var(--color-primary);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.prestamo-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.prestamo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    min-width: 0;
+}
+
+.prestamo-title {
+    min-width: 0;
+}
+
+.prestamo-title h2 {
+    font-size: 18px;
+    line-height: 1.15;
+    margin-bottom: 3px;
+}
+
+.prestamo-title span {
+    display: block;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.status {
+    flex: 0 0 auto;
+    max-width: 82px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 1.1;
+    text-align: center;
+    white-space: normal;
+}
+
+.active {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.returned {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.prestamo-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.prestamo-details p {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1.25;
+}
+
+.prestamo-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.prestamo-buttons button {
+    min-height: 42px;
+    padding: 8px 6px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.edit-button {
+    background: var(--color-primary);
+}
+
+.return-button {
+    background: var(--color-success);
+}
+
+@media (max-width: 340px) {
+    .prestamo-card {
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .vehicle-image {
+        width: 76px;
+        height: 104px;
+    }
+
+    .prestamo-title h2 {
+        font-size: 17px;
+    }
+
+    .prestamo-buttons button {
+        min-height: 40px;
+        font-size: 12px;
+    }
+}

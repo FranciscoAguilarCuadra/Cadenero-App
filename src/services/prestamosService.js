@@ -162,18 +162,27 @@ export async function eliminarPrestamo(prestamo) {
         obtenerRutaFotoDesdeUrl(prestamo.fotoGarantia),
     ].filter(Boolean);
 
+    const { data, error } = await supabase
+        .from(TABLA_PRESTAMOS)
+        .delete()
+        .eq("id", String(prestamo.id))
+        .select("id");
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+        throw new Error(
+            "Supabase no elimino el arriendo. Revisa las politicas de eliminacion."
+        );
+    }
+
     if (rutasFotos.length > 0) {
         const { error: errorFotos } = await supabase.storage
             .from(BUCKET_PRESTAMOS)
             .remove(rutasFotos);
 
-        if (errorFotos) throw errorFotos;
+        if (errorFotos) {
+            console.error("No se pudieron eliminar las fotos del arriendo.", errorFotos);
+        }
     }
-
-    const { error } = await supabase
-        .from(TABLA_PRESTAMOS)
-        .delete()
-        .eq("id", String(prestamo.id));
-
-    if (error) throw error;
 }

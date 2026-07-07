@@ -77,7 +77,9 @@ function Dashboard({
         try {
             await onEliminarPrestamo(prestamo);
         } catch (error) {
-            alert("No se pudo eliminar el arriendo.");
+            alert(
+                "No se pudo eliminar el arriendo. Revisa que las politicas de eliminacion esten aplicadas en Supabase."
+            );
             console.error(error);
         }
     }

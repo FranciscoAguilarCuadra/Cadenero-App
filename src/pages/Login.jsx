@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 import "../styles/Login.css";
 
@@ -7,6 +8,7 @@ function Login({ onLogin }) {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [cargando, setCargando] = useState(false);
+    const [mostrarPassword, setMostrarPassword] = useState(false);
 
     async function manejarSubmit(event) {
         event.preventDefault();
@@ -45,13 +47,28 @@ function Login({ onLogin }) {
 
                 <label className="login-field">
                     Contraseña
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        autoComplete="current-password"
-                        required
-                    />
+                    <span className="password-input">
+                        <input
+                            type={mostrarPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}
+                            autoComplete="current-password"
+                            required
+                        />
+
+                        <button
+                            type="button"
+                            className="password-toggle"
+                            onClick={() => setMostrarPassword((actual) => !actual)}
+                            aria-label={
+                                mostrarPassword
+                                    ? "Ocultar contraseña"
+                                    : "Mostrar contraseña"
+                            }
+                        >
+                            {mostrarPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                    </span>
                 </label>
 
                 {error && <p className="login-error">{error}</p>}

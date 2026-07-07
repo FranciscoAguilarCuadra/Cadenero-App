@@ -53,6 +53,27 @@
     font: inherit;
 }
 
+.password-input {
+    position: relative;
+    display: block;
+}
+
+.password-input input {
+    padding-right: 52px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    transform: translateY(-50%);
+    border-radius: 10px;
+    color: var(--color-text-secondary);
+    background: transparent;
+}
+
 .login-error {
     color: var(--color-danger);
     font-size: 14px;

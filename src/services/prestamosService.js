@@ -31,6 +31,20 @@ function obtenerRutaFotoDesdeUrl(url) {
     return decodeURIComponent(url.slice(posicion + marcador.length));
 }
 
+function normalizarFotosVehiculo(prestamo) {
+    if (Array.isArray(prestamo.fotosVehiculo) && prestamo.fotosVehiculo.length > 0) {
+        return prestamo.fotosVehiculo.filter(Boolean);
+    }
+
+    if (Array.isArray(prestamo.fotos_vehiculo) && prestamo.fotos_vehiculo.length > 0) {
+        return prestamo.fotos_vehiculo.filter(Boolean);
+    }
+
+    return prestamo.fotoVehiculo || prestamo.foto_vehiculo
+        ? [prestamo.fotoVehiculo || prestamo.foto_vehiculo]
+        : [];
+}
+
 async function subirFotoSiCorresponde(prestamoId, campo, valor) {
     if (!valor || !valor.startsWith("data:image")) {
         return valor || "";
@@ -52,13 +66,26 @@ async function subirFotoSiCorresponde(prestamoId, campo, valor) {
     return data.publicUrl;
 }
 
+async function subirFotosVehiculo(prestamoId, fotos) {
+    const fotosNormalizadas = fotos.filter(Boolean);
+
+    return Promise.all(
+        fotosNormalizadas.map((foto, index) =>
+            subirFotoSiCorresponde(prestamoId, `vehiculo-${index + 1}`, foto)
+        )
+    );
+}
+
 function desdeSupabase(prestamo) {
+    const fotosVehiculo = normalizarFotosVehiculo(prestamo);
+
     return {
         id: prestamo.id,
         dias: prestamo.dias,
         pago: prestamo.pago,
         observaciones: prestamo.observaciones || "",
-        fotoVehiculo: prestamo.foto_vehiculo || "",
+        fotoVehiculo: fotosVehiculo[0] || "",
+        fotosVehiculo,
         fotoGarantia: prestamo.foto_garantia || "",
         estado: prestamo.estado,
         usuarioId: prestamo.usuario_id,
@@ -69,10 +96,9 @@ function desdeSupabase(prestamo) {
 
 async function haciaSupabase(prestamo) {
     const id = String(prestamo.id || Date.now());
-    const fotoVehiculo = await subirFotoSiCorresponde(
+    const fotosVehiculo = await subirFotosVehiculo(
         id,
-        "vehiculo",
-        prestamo.fotoVehiculo
+        normalizarFotosVehiculo(prestamo)
     );
     const fotoGarantia = await subirFotoSiCorresponde(
         id,
@@ -85,7 +111,8 @@ async function haciaSupabase(prestamo) {
         dias: Number(prestamo.dias),
         pago: prestamo.pago,
         observaciones: prestamo.observaciones || "",
-        foto_vehiculo: fotoVehiculo,
+        foto_vehiculo: fotosVehiculo[0] || "",
+        fotos_vehiculo: fotosVehiculo,
         foto_garantia: fotoGarantia,
         estado: prestamo.estado || "Activo",
         usuario_id: prestamo.usuarioId || null,
@@ -158,9 +185,10 @@ export async function eliminarPrestamo(prestamo) {
     validarConfiguracion();
 
     const rutasFotos = [
-        obtenerRutaFotoDesdeUrl(prestamo.fotoVehiculo),
+        ...normalizarFotosVehiculo(prestamo).map(obtenerRutaFotoDesdeUrl),
         obtenerRutaFotoDesdeUrl(prestamo.fotoGarantia),
     ].filter(Boolean);
+    const rutasUnicas = [...new Set(rutasFotos)];
 
     const { data, error } = await supabase
         .from(TABLA_PRESTAMOS)
@@ -176,10 +204,10 @@ export async function eliminarPrestamo(prestamo) {
         );
     }
 
-    if (rutasFotos.length > 0) {
+    if (rutasUnicas.length > 0) {
         const { error: errorFotos } = await supabase.storage
             .from(BUCKET_PRESTAMOS)
-            .remove(rutasFotos);
+            .remove(rutasUnicas);
 
         if (errorFotos) {
             console.error("No se pudieron eliminar las fotos del arriendo.", errorFotos);

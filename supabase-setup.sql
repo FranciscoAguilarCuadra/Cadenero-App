@@ -100,6 +100,7 @@ create table if not exists public.prestamos (
     pago text not null,
     observaciones text default '',
     foto_vehiculo text default '',
+    fotos_vehiculo text[] not null default '{}',
     foto_garantia text default '',
     estado text not null default 'Activo',
     usuario_id uuid references public.profiles(id),
@@ -109,6 +110,7 @@ create table if not exists public.prestamos (
 );
 
 alter table public.prestamos add column if not exists usuario_id uuid references public.profiles(id);
+alter table public.prestamos add column if not exists fotos_vehiculo text[] not null default '{}';
 alter table public.prestamos enable row level security;
 
 drop policy if exists "Permitir lectura publica de prestamos" on public.prestamos;

@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { FaTimes, FaCamera, FaSave } from "react-icons/fa";
+import { FaCamera, FaSave, FaTimes, FaTrash } from "react-icons/fa";
 
 import "../styles/ModalNuevoPrestamo.css";
+
+function obtenerFotosVehiculo(prestamo) {
+    if (Array.isArray(prestamo?.fotosVehiculo) && prestamo.fotosVehiculo.length > 0) {
+        return prestamo.fotosVehiculo.filter(Boolean);
+    }
+
+    return prestamo?.fotoVehiculo ? [prestamo.fotoVehiculo] : [];
+}
 
 function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando }) {
     const [formulario, setFormulario] = useState({
@@ -9,7 +17,7 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
         dias: prestamoEditando?.dias || 1,
         pago: prestamoEditando?.pago || "Efectivo",
         observaciones: prestamoEditando?.observaciones || "",
-        fotoVehiculo: prestamoEditando?.fotoVehiculo || "",
+        fotosVehiculo: obtenerFotosVehiculo(prestamoEditando),
         fotoGarantia: prestamoEditando?.fotoGarantia || "",
         estado: prestamoEditando?.estado || "Activo",
         fechaIngreso: prestamoEditando?.fechaIngreso || new Date().toISOString(),
@@ -65,7 +73,33 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
         });
     }
 
-    async function manejarFoto(event, campo) {
+    async function comprimirArchivos(archivos) {
+        return Promise.all(archivos.map(comprimirImagen));
+    }
+
+    async function manejarFotosVehiculo(event) {
+        const archivos = Array.from(event.target.files || []);
+
+        if (archivos.length === 0) return;
+
+        try {
+            const imagenesComprimidas = await comprimirArchivos(archivos);
+
+            setFormulario((prevFormulario) => ({
+                ...prevFormulario,
+                fotosVehiculo: [
+                    ...prevFormulario.fotosVehiculo,
+                    ...imagenesComprimidas,
+                ],
+            }));
+        } catch {
+            alert("No se pudo cargar la imagen. Intenta con otra foto.");
+        } finally {
+            event.target.value = "";
+        }
+    }
+
+    async function manejarFotoGarantia(event) {
         const archivo = event.target.files[0];
 
         if (!archivo) return;
@@ -75,11 +109,22 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
 
             setFormulario((prevFormulario) => ({
                 ...prevFormulario,
-                [campo]: imagenComprimida,
+                fotoGarantia: imagenComprimida,
             }));
         } catch {
             alert("No se pudo cargar la imagen. Intenta con otra foto.");
+        } finally {
+            event.target.value = "";
         }
+    }
+
+    function eliminarFotoVehiculo(indiceFoto) {
+        setFormulario((prevFormulario) => ({
+            ...prevFormulario,
+            fotosVehiculo: prevFormulario.fotosVehiculo.filter(
+                (_, indice) => indice !== indiceFoto
+            ),
+        }));
     }
 
     function manejarSubmit(event) {
@@ -89,6 +134,7 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
             ...formulario,
             id: formulario.id || Date.now(),
             dias: Number(formulario.dias),
+            fotoVehiculo: formulario.fotosVehiculo[0] || "",
         });
     }
 
@@ -110,45 +156,78 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
                     </button>
                 </div>
 
-                <div className="photo-actions">
-                    <label className="photo-button">
-                        {formulario.fotoVehiculo ? (
-                            <img src={formulario.fotoVehiculo} alt="Vehículo" />
-                        ) : (
-                            <>
-                                <FaCamera />
-                                Foto vehículo
-                            </>
-                        )}
+                <div className="photo-section">
+                    <div className="photo-section-header">
+                        <span>Fotos vehículo</span>
 
-                        <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={(event) => manejarFoto(event, "fotoVehiculo")}
-                            disabled={guardando}
-                        />
-                    </label>
+                        <label className="photo-add-button">
+                            <FaCamera />
+                            Agregar
+                            <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                multiple
+                                onChange={manejarFotosVehiculo}
+                                disabled={guardando}
+                            />
+                        </label>
+                    </div>
 
-                    <label className="photo-button">
-                        {formulario.fotoGarantia ? (
-                            <img src={formulario.fotoGarantia} alt="Garantía" />
-                        ) : (
-                            <>
-                                <FaCamera />
-                                Foto garantía
-                            </>
-                        )}
+                    {formulario.fotosVehiculo.length > 0 ? (
+                        <div className="vehicle-photo-grid">
+                            {formulario.fotosVehiculo.map((foto, indice) => (
+                                <div className="vehicle-photo-item" key={`${foto}-${indice}`}>
+                                    <img
+                                        src={foto}
+                                        alt={`Vehículo ${indice + 1}`}
+                                    />
 
-                        <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={(event) => manejarFoto(event, "fotoGarantia")}
-                            disabled={guardando}
-                        />
-                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => eliminarFotoVehiculo(indice)}
+                                        aria-label="Eliminar foto"
+                                        disabled={guardando}
+                                    >
+                                        <FaTrash />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <label className="photo-button photo-button-wide">
+                            <FaCamera />
+                            Foto vehículo
+                            <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                multiple
+                                onChange={manejarFotosVehiculo}
+                                disabled={guardando}
+                            />
+                        </label>
+                    )}
                 </div>
+
+                <label className="photo-button warranty-photo">
+                    {formulario.fotoGarantia ? (
+                        <img src={formulario.fotoGarantia} alt="Garantía" />
+                    ) : (
+                        <>
+                            <FaCamera />
+                            Foto garantía
+                        </>
+                    )}
+
+                    <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={manejarFotoGarantia}
+                        disabled={guardando}
+                    />
+                </label>
 
                 <label className="form-group">
                     Días

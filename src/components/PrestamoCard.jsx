@@ -1,26 +1,80 @@
+import { useState } from "react";
 import {
-    FaCamera,
-    FaMoneyBillWave,
     FaCalendarAlt,
-    FaEdit,
+    FaCamera,
     FaCheckCircle,
+    FaChevronLeft,
+    FaChevronRight,
+    FaEdit,
+    FaMoneyBillWave,
+    FaTimes,
     FaTrash,
 } from "react-icons/fa";
 
 import { formatearHora } from "../utils/fechas";
 import "../styles/PrestamoCard.css";
 
+function obtenerFotos(prestamo) {
+    const fotosVehiculo = Array.isArray(prestamo.fotosVehiculo)
+        ? prestamo.fotosVehiculo.filter(Boolean)
+        : [];
+    const fotos = fotosVehiculo.length > 0 ? fotosVehiculo : [prestamo.fotoVehiculo];
+
+    if (prestamo.fotoGarantia) {
+        fotos.push(prestamo.fotoGarantia);
+    }
+
+    return fotos.filter(Boolean);
+}
+
 function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
-    const tieneFotoVehiculo = Boolean(prestamo.fotoVehiculo);
+    const [indiceGaleria, setIndiceGaleria] = useState(null);
+    const fotos = obtenerFotos(prestamo);
+    const fotoPrincipal = fotos[0];
+    const tieneFotos = fotos.length > 0;
     const estaDevuelto = prestamo.estado === "Devuelto";
     const codigo = String(prestamo.id).slice(-4);
     const horaIngreso = formatearHora(prestamo.fechaIngreso);
 
+    function mostrarFotoAnterior() {
+        setIndiceGaleria((indiceActual) =>
+            indiceActual === 0 ? fotos.length - 1 : indiceActual - 1
+        );
+    }
+
+    function mostrarFotoSiguiente() {
+        setIndiceGaleria((indiceActual) =>
+            indiceActual === fotos.length - 1 ? 0 : indiceActual + 1
+        );
+    }
+
     return (
         <article className="prestamo-card">
+            {onEliminar && (
+                <button
+                    type="button"
+                    className="delete-icon-button"
+                    onClick={() => onEliminar(prestamo)}
+                    aria-label="Eliminar arriendo"
+                >
+                    <FaTrash />
+                </button>
+            )}
+
             <div className="vehicle-image">
-                {tieneFotoVehiculo ? (
-                    <img src={prestamo.fotoVehiculo} alt="Vehículo registrado" />
+                {tieneFotos ? (
+                    <button
+                        type="button"
+                        className="vehicle-image-button"
+                        onClick={() => setIndiceGaleria(0)}
+                        aria-label="Ver fotos del arriendo"
+                    >
+                        <img src={fotoPrincipal} alt="Vehículo registrado" />
+
+                        {fotos.length > 1 && (
+                            <span className="photo-count">{fotos.length}</span>
+                        )}
+                    </button>
                 ) : (
                     <div className="vehicle-placeholder">
                         <FaCamera size={28} />
@@ -60,6 +114,7 @@ function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
                     {!estaDevuelto && (
                         <>
                             <button
+                                type="button"
                                 className="edit-button"
                                 onClick={() => onEditar(prestamo)}
                             >
@@ -68,6 +123,7 @@ function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
                             </button>
 
                             <button
+                                type="button"
                                 className="return-button"
                                 onClick={() => onDevolver(prestamo.id)}
                             >
@@ -76,18 +132,52 @@ function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
                             </button>
                         </>
                     )}
-
-                    {onEliminar && (
-                        <button
-                            className="delete-button"
-                            onClick={() => onEliminar(prestamo)}
-                        >
-                            <FaTrash />
-                            Eliminar
-                        </button>
-                    )}
                 </div>
             </div>
+
+            {indiceGaleria !== null && (
+                <div className="gallery-overlay">
+                    <button
+                        type="button"
+                        className="gallery-close"
+                        onClick={() => setIndiceGaleria(null)}
+                        aria-label="Cerrar galería"
+                    >
+                        <FaTimes />
+                    </button>
+
+                    {fotos.length > 1 && (
+                        <button
+                            type="button"
+                            className="gallery-nav gallery-prev"
+                            onClick={mostrarFotoAnterior}
+                            aria-label="Foto anterior"
+                        >
+                            <FaChevronLeft />
+                        </button>
+                    )}
+
+                    <img
+                        src={fotos[indiceGaleria]}
+                        alt={`Foto ${indiceGaleria + 1} del arriendo`}
+                    />
+
+                    {fotos.length > 1 && (
+                        <button
+                            type="button"
+                            className="gallery-nav gallery-next"
+                            onClick={mostrarFotoSiguiente}
+                            aria-label="Foto siguiente"
+                        >
+                            <FaChevronRight />
+                        </button>
+                    )}
+
+                    <span className="gallery-counter">
+                        {indiceGaleria + 1} / {fotos.length}
+                    </span>
+                </div>
+            )}
         </article>
     );
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import Historial from "./pages/Historial";
@@ -14,8 +14,8 @@ import {
     obtenerSesionActual,
 } from "./services/authService";
 import {
-    guardarPrestamo as guardarPrestamoRemoto,
     eliminarPrestamo as eliminarPrestamoRemoto,
+    guardarPrestamo as guardarPrestamoRemoto,
     marcarPrestamoDevuelto,
     obtenerPrestamos,
 } from "./services/prestamosService";
@@ -24,6 +24,16 @@ const campoLegacy = "ca" + "dena";
 
 function normalizarPrestamo(prestamo) {
     const prestamoNormalizado = { ...prestamo };
+    const fotosVehiculo = Array.isArray(prestamoNormalizado.fotosVehiculo)
+        ? prestamoNormalizado.fotosVehiculo.filter(Boolean)
+        : [];
+
+    if (fotosVehiculo.length === 0 && prestamoNormalizado.fotoVehiculo) {
+        fotosVehiculo.push(prestamoNormalizado.fotoVehiculo);
+    }
+
+    prestamoNormalizado.fotosVehiculo = fotosVehiculo;
+    prestamoNormalizado.fotoVehiculo = fotosVehiculo[0] || "";
     delete prestamoNormalizado[campoLegacy];
 
     return prestamoNormalizado;
@@ -45,46 +55,52 @@ function App() {
     const [cargandoAuth, setCargandoAuth] = useState(isSupabaseConfigured);
     const [cargandoPrestamos, setCargandoPrestamos] = useState(false);
 
-    const cargarPrestamosRemotos = useCallback(async function cargarPrestamosRemotos(perfilUsuario) {
-        setCargandoPrestamos(true);
+    const cargarPrestamosRemotos = useCallback(
+        async function cargarPrestamosRemotos(perfilUsuario) {
+            setCargandoPrestamos(true);
 
-        try {
-            const prestamosRemotos = await obtenerPrestamos(perfilUsuario);
-            setPrestamos(prestamosRemotos.map(normalizarPrestamo));
-        } catch (error) {
-            alert("No se pudieron cargar los préstamos desde Supabase.");
-            console.error(error);
-        } finally {
-            setCargandoPrestamos(false);
-        }
-    }, []);
+            try {
+                const prestamosRemotos = await obtenerPrestamos(perfilUsuario);
+                setPrestamos(prestamosRemotos.map(normalizarPrestamo));
+            } catch (error) {
+                alert("No se pudieron cargar los préstamos desde Supabase.");
+                console.error(error);
+            } finally {
+                setCargandoPrestamos(false);
+            }
+        },
+        []
+    );
 
-    const aplicarSesion = useCallback(async function aplicarSesion(nuevaSesion) {
-        setSesion(nuevaSesion);
+    const aplicarSesion = useCallback(
+        async function aplicarSesion(nuevaSesion) {
+            setSesion(nuevaSesion);
 
-        if (!nuevaSesion) {
-            setPerfil(null);
-            setPrestamos([]);
-            return;
-        }
-
-        try {
-            const perfilUsuario = await obtenerPerfilUsuario(nuevaSesion.user.id);
-
-            if (!perfilUsuario.activo) {
-                await cerrarSesion();
+            if (!nuevaSesion) {
                 setPerfil(null);
-                throw new Error("Tu cuenta aún no está activa.");
+                setPrestamos([]);
+                return;
             }
 
-            setPerfil(perfilUsuario);
-            await cargarPrestamosRemotos(perfilUsuario);
-        } catch (error) {
-            setPerfil(null);
-            setPrestamos([]);
-            console.error(error);
-        }
-    }, [cargarPrestamosRemotos]);
+            try {
+                const perfilUsuario = await obtenerPerfilUsuario(nuevaSesion.user.id);
+
+                if (!perfilUsuario.activo) {
+                    await cerrarSesion();
+                    setPerfil(null);
+                    throw new Error("Tu cuenta aún no está activa.");
+                }
+
+                setPerfil(perfilUsuario);
+                await cargarPrestamosRemotos(perfilUsuario);
+            } catch (error) {
+                setPerfil(null);
+                setPrestamos([]);
+                console.error(error);
+            }
+        },
+        [cargarPrestamosRemotos]
+    );
 
     useEffect(() => {
         if (!isSupabaseConfigured) return;

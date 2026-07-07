@@ -15,6 +15,7 @@ import {
 } from "./services/authService";
 import {
     guardarPrestamo as guardarPrestamoRemoto,
+    eliminarPrestamo as eliminarPrestamoRemoto,
     marcarPrestamoDevuelto,
     obtenerPrestamos,
 } from "./services/prestamosService";
@@ -212,6 +213,18 @@ function App() {
         );
     }
 
+    async function eliminarPrestamo(prestamoEliminado) {
+        if (isSupabaseConfigured) {
+            await eliminarPrestamoRemoto(prestamoEliminado);
+        }
+
+        setPrestamos((prestamosActuales) =>
+            prestamosActuales.filter(
+                (prestamo) => prestamo.id !== prestamoEliminado.id
+            )
+        );
+    }
+
     const prestamosActivos = prestamos.filter(
         (prestamo) => prestamo.estado === "Activo"
     );
@@ -240,6 +253,7 @@ function App() {
                         onAgregarPrestamo={agregarPrestamo}
                         onEditarPrestamo={editarPrestamo}
                         onDevolverPrestamo={devolverPrestamo}
+                        onEliminarPrestamo={eliminarPrestamo}
                         onLogout={manejarLogout}
                     />
                 }

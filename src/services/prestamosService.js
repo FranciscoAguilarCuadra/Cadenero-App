@@ -20,6 +20,17 @@ function crearNombreFoto(prestamoId, campo) {
     return `${prestamoId}/${campo}-${Date.now()}.jpg`;
 }
 
+function obtenerRutaFotoDesdeUrl(url) {
+    if (!url) return null;
+
+    const marcador = `/storage/v1/object/public/${BUCKET_PRESTAMOS}/`;
+    const posicion = url.indexOf(marcador);
+
+    if (posicion === -1) return null;
+
+    return decodeURIComponent(url.slice(posicion + marcador.length));
+}
+
 async function subirFotoSiCorresponde(prestamoId, campo, valor) {
     if (!valor || !valor.startsWith("data:image")) {
         return valor || "";
@@ -141,4 +152,28 @@ export async function marcarPrestamoDevuelto(id) {
     if (error) throw error;
 
     return desdeSupabase(data);
+}
+
+export async function eliminarPrestamo(prestamo) {
+    validarConfiguracion();
+
+    const rutasFotos = [
+        obtenerRutaFotoDesdeUrl(prestamo.fotoVehiculo),
+        obtenerRutaFotoDesdeUrl(prestamo.fotoGarantia),
+    ].filter(Boolean);
+
+    if (rutasFotos.length > 0) {
+        const { error: errorFotos } = await supabase.storage
+            .from(BUCKET_PRESTAMOS)
+            .remove(rutasFotos);
+
+        if (errorFotos) throw errorFotos;
+    }
+
+    const { error } = await supabase
+        .from(TABLA_PRESTAMOS)
+        .delete()
+        .eq("id", String(prestamo.id));
+
+    if (error) throw error;
 }

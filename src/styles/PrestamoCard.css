@@ -107,7 +107,7 @@
 
 .prestamo-buttons {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
     gap: 8px;
 }
 
@@ -130,6 +130,10 @@
 
 .return-button {
     background: var(--color-success);
+}
+
+.delete-button {
+    background: var(--color-danger);
 }
 
 @media (max-width: 340px) {

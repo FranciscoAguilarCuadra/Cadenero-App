@@ -15,12 +15,14 @@ function Dashboard({
     onAgregarPrestamo,
     onEditarPrestamo,
     onDevolverPrestamo,
+    onEliminarPrestamo,
     onLogout,
 }) {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [prestamoEditando, setPrestamoEditando] = useState(null);
     const [guardando, setGuardando] = useState(false);
     const gruposPorFecha = agruparPorFecha(prestamos);
+    const nombreUsuario = usuario?.nombre || usuario?.email || "usuario";
 
     function abrirNuevoPrestamo() {
         setPrestamoEditando(null);
@@ -65,10 +67,27 @@ function Dashboard({
         }
     }
 
+    async function manejarEliminacion(prestamo) {
+        const confirmado = window.confirm(
+            "¿Eliminar este arriendo? Esta acción no se puede deshacer."
+        );
+
+        if (!confirmado) return;
+
+        try {
+            await onEliminarPrestamo(prestamo);
+        } catch (error) {
+            alert("No se pudo eliminar el arriendo.");
+            console.error(error);
+        }
+    }
+
     return (
         <main className="dashboard">
             <header className="dashboard-header">
                 <h1 className="dashboard-title">Cadenero</h1>
+
+                <p className="dashboard-welcome">Bienvenido, {nombreUsuario}</p>
 
                 <p className="dashboard-subtitle">
                     {prestamos.length} préstamos activos
@@ -92,6 +111,7 @@ function Dashboard({
                                         prestamo={prestamo}
                                         onEditar={abrirEditarPrestamo}
                                         onDevolver={manejarDevolucion}
+                                        onEliminar={manejarEliminacion}
                                     />
                                 ))}
                             </div>

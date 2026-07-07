@@ -117,6 +117,7 @@ drop policy if exists "Permitir edicion publica de prestamos" on public.prestamo
 drop policy if exists "Usuarios activos pueden leer prestamos" on public.prestamos;
 drop policy if exists "Usuarios activos pueden crear prestamos" on public.prestamos;
 drop policy if exists "Usuarios activos pueden editar prestamos" on public.prestamos;
+drop policy if exists "Usuarios activos pueden eliminar prestamos" on public.prestamos;
 
 create policy "Usuarios activos pueden leer prestamos"
 on public.prestamos
@@ -146,6 +147,14 @@ with check (
     or (public.usuario_activo() and usuario_id = auth.uid())
 );
 
+create policy "Usuarios activos pueden eliminar prestamos"
+on public.prestamos
+for delete
+using (
+    public.usuario_admin()
+    or (public.usuario_activo() and usuario_id = auth.uid())
+);
+
 insert into storage.buckets (id, name, public)
 values ('prestamos', 'prestamos', true)
 on conflict (id) do update set public = true;
@@ -155,6 +164,7 @@ drop policy if exists "Permitir subida publica de fotos" on storage.objects;
 drop policy if exists "Usuarios activos pueden leer fotos" on storage.objects;
 drop policy if exists "Usuarios activos pueden subir fotos" on storage.objects;
 drop policy if exists "Usuarios activos pueden actualizar fotos" on storage.objects;
+drop policy if exists "Usuarios activos pueden eliminar fotos" on storage.objects;
 
 create policy "Usuarios activos pueden leer fotos"
 on storage.objects
@@ -171,6 +181,11 @@ on storage.objects
 for update
 using (bucket_id = 'prestamos' and public.usuario_activo())
 with check (bucket_id = 'prestamos' and public.usuario_activo());
+
+create policy "Usuarios activos pueden eliminar fotos"
+on storage.objects
+for delete
+using (bucket_id = 'prestamos' and public.usuario_activo());
 
 -- Después de crear una cuenta en Authentication > Users,
 -- actívala manualmente con una consulta como esta:

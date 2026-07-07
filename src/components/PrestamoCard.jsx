@@ -4,12 +4,13 @@ import {
     FaCalendarAlt,
     FaEdit,
     FaCheckCircle,
+    FaTrash,
 } from "react-icons/fa";
 
 import { formatearHora } from "../utils/fechas";
 import "../styles/PrestamoCard.css";
 
-function PrestamoCard({ prestamo, onEditar, onDevolver }) {
+function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
     const tieneFotoVehiculo = Boolean(prestamo.fotoVehiculo);
     const estaDevuelto = prestamo.estado === "Devuelto";
     const codigo = String(prestamo.id).slice(-4);
@@ -55,25 +56,37 @@ function PrestamoCard({ prestamo, onEditar, onDevolver }) {
                     </p>
                 </div>
 
-                {!estaDevuelto && (
-                    <div className="prestamo-buttons">
-                        <button
-                            className="edit-button"
-                            onClick={() => onEditar(prestamo)}
-                        >
-                            <FaEdit />
-                            Editar
-                        </button>
+                <div className="prestamo-buttons">
+                    {!estaDevuelto && (
+                        <>
+                            <button
+                                className="edit-button"
+                                onClick={() => onEditar(prestamo)}
+                            >
+                                <FaEdit />
+                                Editar
+                            </button>
 
+                            <button
+                                className="return-button"
+                                onClick={() => onDevolver(prestamo.id)}
+                            >
+                                <FaCheckCircle />
+                                Devuelto
+                            </button>
+                        </>
+                    )}
+
+                    {onEliminar && (
                         <button
-                            className="return-button"
-                            onClick={() => onDevolver(prestamo.id)}
+                            className="delete-button"
+                            onClick={() => onEliminar(prestamo)}
                         >
-                            <FaCheckCircle />
-                            Devuelto
+                            <FaTrash />
+                            Eliminar
                         </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </article>
     );

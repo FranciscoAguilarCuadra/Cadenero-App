@@ -143,7 +143,7 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
             <form className="modal-card" onSubmit={manejarSubmit}>
                 <div className="modal-header">
                     <h2>
-                        {prestamoEditando ? "Editar préstamo" : "Nuevo préstamo"}
+                        {prestamoEditando ? "Editar préstamo" : "Nuevo arriendo"}
                     </h2>
 
                     <button

@@ -90,13 +90,19 @@ function validarConfiguracion() {
     }
 }
 
-export async function obtenerPrestamos() {
+export async function obtenerPrestamos(perfil) {
     validarConfiguracion();
 
-    const { data, error } = await supabase
+    let consulta = supabase
         .from(TABLA_PRESTAMOS)
         .select("*")
         .order("fecha_ingreso", { ascending: false });
+
+    if (perfil?.rol !== "admin") {
+        consulta = consulta.eq("usuario_id", perfil?.id);
+    }
+
+    const { data, error } = await consulta;
 
     if (error) throw error;
 

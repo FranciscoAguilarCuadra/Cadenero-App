@@ -121,18 +121,30 @@ drop policy if exists "Usuarios activos pueden editar prestamos" on public.prest
 create policy "Usuarios activos pueden leer prestamos"
 on public.prestamos
 for select
-using (public.usuario_activo());
+using (
+    public.usuario_admin()
+    or (public.usuario_activo() and usuario_id = auth.uid())
+);
 
 create policy "Usuarios activos pueden crear prestamos"
 on public.prestamos
 for insert
-with check (public.usuario_activo());
+with check (
+    public.usuario_activo()
+    and usuario_id = auth.uid()
+);
 
 create policy "Usuarios activos pueden editar prestamos"
 on public.prestamos
 for update
-using (public.usuario_activo())
-with check (public.usuario_activo());
+using (
+    public.usuario_admin()
+    or (public.usuario_activo() and usuario_id = auth.uid())
+)
+with check (
+    public.usuario_admin()
+    or (public.usuario_activo() and usuario_id = auth.uid())
+);
 
 insert into storage.buckets (id, name, public)
 values ('prestamos', 'prestamos', true)
@@ -176,3 +188,14 @@ with check (bucket_id = 'prestamos' and public.usuario_activo());
 --     rol = 'admin',
 --     nombre = 'Administrador'
 -- where email = 'admin@ejemplo.cl';
+--
+-- Si tienes préstamos antiguos sin usuario asignado, puedes asignarlos
+-- manualmente a una cuenta específica con:
+--
+-- update public.prestamos
+-- set usuario_id = (
+--     select id
+--     from public.profiles
+--     where email = 'correo@ejemplo.cl'
+-- )
+-- where usuario_id is null;

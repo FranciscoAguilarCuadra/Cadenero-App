@@ -44,11 +44,11 @@ function App() {
     const [cargandoAuth, setCargandoAuth] = useState(isSupabaseConfigured);
     const [cargandoPrestamos, setCargandoPrestamos] = useState(false);
 
-    const cargarPrestamosRemotos = useCallback(async function cargarPrestamosRemotos() {
+    const cargarPrestamosRemotos = useCallback(async function cargarPrestamosRemotos(perfilUsuario) {
         setCargandoPrestamos(true);
 
         try {
-            const prestamosRemotos = await obtenerPrestamos();
+            const prestamosRemotos = await obtenerPrestamos(perfilUsuario);
             setPrestamos(prestamosRemotos.map(normalizarPrestamo));
         } catch (error) {
             alert("No se pudieron cargar los préstamos desde Supabase.");
@@ -77,7 +77,7 @@ function App() {
             }
 
             setPerfil(perfilUsuario);
-            await cargarPrestamosRemotos();
+            await cargarPrestamosRemotos(perfilUsuario);
         } catch (error) {
             setPerfil(null);
             setPrestamos([]);
@@ -128,7 +128,7 @@ function App() {
 
         setSesion(nuevaSesion);
         setPerfil(perfilUsuario);
-        await cargarPrestamosRemotos();
+        await cargarPrestamosRemotos(perfilUsuario);
     }
 
     async function manejarLogout() {

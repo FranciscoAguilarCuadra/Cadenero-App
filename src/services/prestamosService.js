@@ -50,6 +50,7 @@ function desdeSupabase(prestamo) {
         fotoVehiculo: prestamo.foto_vehiculo || "",
         fotoGarantia: prestamo.foto_garantia || "",
         estado: prestamo.estado,
+        usuarioId: prestamo.usuario_id,
         fechaIngreso: prestamo.fecha_ingreso,
         fechaDevolucion: prestamo.fecha_devolucion,
     };
@@ -76,6 +77,7 @@ async function haciaSupabase(prestamo) {
         foto_vehiculo: fotoVehiculo,
         foto_garantia: fotoGarantia,
         estado: prestamo.estado || "Activo",
+        usuario_id: prestamo.usuarioId || null,
         fecha_ingreso: prestamo.fechaIngreso || new Date().toISOString(),
         fecha_devolucion: prestamo.fechaDevolucion || null,
         fecha_actualizacion: new Date().toISOString(),

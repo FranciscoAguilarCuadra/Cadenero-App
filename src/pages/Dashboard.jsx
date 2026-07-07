@@ -11,9 +11,11 @@ import { agruparPorFecha } from "../utils/fechas";
 function Dashboard({
     prestamos,
     cargandoPrestamos,
+    usuario,
     onAgregarPrestamo,
     onEditarPrestamo,
     onDevolverPrestamo,
+    onLogout,
 }) {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [prestamoEditando, setPrestamoEditando] = useState(null);
@@ -100,7 +102,7 @@ function Dashboard({
 
             <FloatingButton onClick={abrirNuevoPrestamo} />
 
-            <Header />
+            <Header usuario={usuario} onLogout={onLogout} />
 
             {modalAbierto && (
                 <ModalNuevoPrestamo

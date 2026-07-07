@@ -1,12 +1,11 @@
 import { NavLink } from "react-router-dom";
-import { FaHome, FaHistory } from "react-icons/fa";
+import { FaHome, FaHistory, FaSignOutAlt } from "react-icons/fa";
 
 import "../styles/Header.css";
 
-function Header() {
+function Header({ usuario, onLogout }) {
     return (
         <nav className="bottom-nav">
-
             <NavLink
                 to="/"
                 end
@@ -28,6 +27,17 @@ function Header() {
                 <span>Historial</span>
             </NavLink>
 
+            {onLogout && (
+                <button
+                    type="button"
+                    className="nav-item nav-button"
+                    onClick={onLogout}
+                    title={usuario?.nombre || usuario?.email || "Salir"}
+                >
+                    <FaSignOutAlt size={20} />
+                    <span>Salir</span>
+                </button>
+            )}
         </nav>
     );
 }

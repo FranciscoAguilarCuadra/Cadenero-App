@@ -2,7 +2,7 @@
 
 ## Estado del proyecto
 
-**Versión actual:** v1.0.0
+**Versión actual:** v1.0.0 + login cerrado en desarrollo
 
 ---
 
@@ -62,9 +62,20 @@ Desarrollar una aplicación web rápida y sencilla para gestionar arriendos de c
 
 ---
 
-# Pendiente Posterior A 1.0.0
+# Login Cerrado
 
-* [ ] Autenticación y reglas privadas
+* [x] Pantalla de inicio de sesión
+* [x] Sin registro público
+* [x] Perfiles con rol y estado activo/inactivo
+* [x] Bloqueo de usuarios no activos
+* [x] Cerrar sesión desde la navegación
+* [ ] Panel admin para crear/activar cuentas desde la app
+
+---
+
+# Pendiente Posterior
+
+* [ ] Panel admin
 * [ ] Buscar préstamos
 * [ ] Filtros por estado
 * [ ] Ordenamiento

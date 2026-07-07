@@ -4,7 +4,7 @@ import { agruparPorFecha } from "../utils/fechas";
 
 import "../styles/Dashboard.css";
 
-function Historial({ prestamos }) {
+function Historial({ prestamos, usuario, onLogout }) {
     const gruposPorFecha = agruparPorFecha(prestamos);
 
     return (
@@ -40,7 +40,7 @@ function Historial({ prestamos }) {
                 )}
             </section>
 
-            <Header />
+            <Header usuario={usuario} onLogout={onLogout} />
         </main>
     );
 }

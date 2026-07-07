@@ -1,10 +1,18 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import Historial from "./pages/Historial";
+import Login from "./pages/Login";
 import prestamosIniciales from "./data/prestamos";
 import { isSupabaseConfigured } from "./supabase";
+import {
+    cerrarSesion,
+    escucharCambiosSesion,
+    iniciarSesion,
+    obtenerPerfilUsuario,
+    obtenerSesionActual,
+} from "./services/authService";
 import {
     guardarPrestamo as guardarPrestamoRemoto,
     marcarPrestamoDevuelto,
@@ -20,38 +28,85 @@ function normalizarPrestamo(prestamo) {
     return prestamoNormalizado;
 }
 
+function obtenerPrestamosLocales() {
+    const guardados = localStorage.getItem("prestamos");
+    const prestamosCargados = guardados ? JSON.parse(guardados) : prestamosIniciales;
+
+    return prestamosCargados.map(normalizarPrestamo);
+}
+
 function App() {
-    const [prestamos, setPrestamos] = useState(() => {
-        if (isSupabaseConfigured) {
-            return [];
+    const [prestamos, setPrestamos] = useState(() =>
+        isSupabaseConfigured ? [] : obtenerPrestamosLocales()
+    );
+    const [sesion, setSesion] = useState(null);
+    const [perfil, setPerfil] = useState(null);
+    const [cargandoAuth, setCargandoAuth] = useState(isSupabaseConfigured);
+    const [cargandoPrestamos, setCargandoPrestamos] = useState(false);
+
+    const cargarPrestamosRemotos = useCallback(async function cargarPrestamosRemotos() {
+        setCargandoPrestamos(true);
+
+        try {
+            const prestamosRemotos = await obtenerPrestamos();
+            setPrestamos(prestamosRemotos.map(normalizarPrestamo));
+        } catch (error) {
+            alert("No se pudieron cargar los préstamos desde Supabase.");
+            console.error(error);
+        } finally {
+            setCargandoPrestamos(false);
+        }
+    }, []);
+
+    const aplicarSesion = useCallback(async function aplicarSesion(nuevaSesion) {
+        setSesion(nuevaSesion);
+
+        if (!nuevaSesion) {
+            setPerfil(null);
+            setPrestamos([]);
+            return;
         }
 
-        const guardados = localStorage.getItem("prestamos");
-        const prestamosCargados = guardados ? JSON.parse(guardados) : prestamosIniciales;
+        try {
+            const perfilUsuario = await obtenerPerfilUsuario(nuevaSesion.user.id);
 
-        return prestamosCargados.map(normalizarPrestamo);
-    });
-    const [cargandoPrestamos, setCargandoPrestamos] = useState(
-        isSupabaseConfigured
-    );
+            if (!perfilUsuario.activo) {
+                await cerrarSesion();
+                setPerfil(null);
+                throw new Error("Tu cuenta aún no está activa.");
+            }
+
+            setPerfil(perfilUsuario);
+            await cargarPrestamosRemotos();
+        } catch (error) {
+            setPerfil(null);
+            setPrestamos([]);
+            console.error(error);
+        }
+    }, [cargarPrestamosRemotos]);
 
     useEffect(() => {
         if (!isSupabaseConfigured) return;
 
-        async function cargarPrestamos() {
+        async function cargarSesionInicial() {
             try {
-                const prestamosRemotos = await obtenerPrestamos();
-                setPrestamos(prestamosRemotos.map(normalizarPrestamo));
+                const sesionActual = await obtenerSesionActual();
+                await aplicarSesion(sesionActual);
             } catch (error) {
-                alert("No se pudieron cargar los préstamos desde Supabase.");
                 console.error(error);
             } finally {
-                setCargandoPrestamos(false);
+                setCargandoAuth(false);
             }
         }
 
-        cargarPrestamos();
-    }, []);
+        const dejarDeEscuchar = escucharCambiosSesion((nuevaSesion) => {
+            aplicarSesion(nuevaSesion);
+        });
+
+        cargarSesionInicial();
+
+        return dejarDeEscuchar;
+    }, [aplicarSesion]);
 
     useEffect(() => {
         if (isSupabaseConfigured) return;
@@ -62,8 +117,35 @@ function App() {
         );
     }, [prestamos]);
 
+    async function manejarLogin(email, password) {
+        const nuevaSesion = await iniciarSesion(email, password);
+        const perfilUsuario = await obtenerPerfilUsuario(nuevaSesion.user.id);
+
+        if (!perfilUsuario.activo) {
+            await cerrarSesion();
+            throw new Error("Tu cuenta aún no está activa.");
+        }
+
+        setSesion(nuevaSesion);
+        setPerfil(perfilUsuario);
+        await cargarPrestamosRemotos();
+    }
+
+    async function manejarLogout() {
+        if (isSupabaseConfigured) {
+            await cerrarSesion();
+        }
+
+        setSesion(null);
+        setPerfil(null);
+        setPrestamos([]);
+    }
+
     async function agregarPrestamo(nuevoPrestamo) {
-        const prestamoNormalizado = normalizarPrestamo(nuevoPrestamo);
+        const prestamoNormalizado = normalizarPrestamo({
+            ...nuevoPrestamo,
+            usuarioId: perfil?.id || null,
+        });
 
         if (isSupabaseConfigured) {
             const prestamoGuardado = await guardarPrestamoRemoto(prestamoNormalizado);
@@ -138,6 +220,14 @@ function App() {
         (prestamo) => prestamo.estado === "Devuelto"
     );
 
+    if (cargandoAuth) {
+        return <main className="app-loading">Cargando sesión...</main>;
+    }
+
+    if (isSupabaseConfigured && (!sesion || !perfil?.activo)) {
+        return <Login onLogin={manejarLogin} />;
+    }
+
     return (
         <Routes>
             <Route
@@ -146,16 +236,24 @@ function App() {
                     <Dashboard
                         prestamos={prestamosActivos}
                         cargandoPrestamos={cargandoPrestamos}
+                        usuario={perfil}
                         onAgregarPrestamo={agregarPrestamo}
                         onEditarPrestamo={editarPrestamo}
                         onDevolverPrestamo={devolverPrestamo}
+                        onLogout={manejarLogout}
                     />
                 }
             />
 
             <Route
                 path="/historial"
-                element={<Historial prestamos={prestamosDevueltos} />}
+                element={
+                    <Historial
+                        prestamos={prestamosDevueltos}
+                        usuario={perfil}
+                        onLogout={manejarLogout}
+                    />
+                }
             />
 
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -14,7 +14,17 @@
 * [x] Crear historial
 * [x] Marcar préstamo como devuelto
 
+## Login cerrado
+
+* [x] Agregar inicio de sesión
+* [x] Evitar registro público
+* [x] Agregar perfiles con rol y estado activo
+* [x] Bloquear cuentas inactivas
+* [x] Agregar cierre de sesión
+
 ## Próximas correcciones
 
-* [ ] Definir mejoras visuales finales
-* [ ] Agregar autenticación
+* [ ] Ejecutar SQL actualizado en Supabase
+* [ ] Crear y activar el primer usuario admin
+* [ ] Probar login en teléfono
+* [ ] Crear panel admin

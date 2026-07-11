@@ -128,6 +128,13 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
         }));
     }
 
+    function eliminarFotoGarantia() {
+        setFormulario((prevFormulario) => ({
+            ...prevFormulario,
+            fotoGarantia: "",
+        }));
+    }
+
     function manejarSubmit(event) {
         event.preventDefault();
 
@@ -211,24 +218,35 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
                     )}
                 </div>
 
-                <label className="photo-button warranty-photo">
+                <div className="warranty-photo-field">
                     {formulario.fotoGarantia ? (
-                        <img src={formulario.fotoGarantia} alt="Garantía" />
+                        <div className="warranty-photo-preview">
+                            <img src={formulario.fotoGarantia} alt="Garantía" />
+
+                            <button
+                                type="button"
+                                onClick={eliminarFotoGarantia}
+                                aria-label="Eliminar foto de garantía"
+                                disabled={guardando}
+                            >
+                                <FaTrash />
+                            </button>
+                        </div>
                     ) : (
-                        <>
+                        <label className="photo-button warranty-photo">
                             <FaCamera />
                             Foto garantía
-                        </>
-                    )}
 
-                    <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={manejarFotoGarantia}
-                        disabled={guardando}
-                    />
-                </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={manejarFotoGarantia}
+                                disabled={guardando}
+                            />
+                        </label>
+                    )}
+                </div>
 
                 <label className="form-group">
                     Tipo

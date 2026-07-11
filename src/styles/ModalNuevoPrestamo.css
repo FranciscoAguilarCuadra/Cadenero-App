@@ -92,7 +92,36 @@
 .warranty-photo {
     width: 100%;
     height: 96px;
+}
+
+.warranty-photo-field {
     margin-bottom: 18px;
+}
+
+.warranty-photo-preview {
+    position: relative;
+    width: 100%;
+    height: 96px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #eef2ff;
+}
+
+.warranty-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.warranty-photo-preview button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.92);
+    color: white;
 }
 
 .vehicle-photo-grid {
@@ -169,6 +198,7 @@
 .save-button:disabled,
 .photo-add-button:has(input:disabled),
 .vehicle-photo-item button:disabled,
+.warranty-photo-preview button:disabled,
 .form-group select:disabled,
 .form-group textarea:disabled {
     cursor: not-allowed;

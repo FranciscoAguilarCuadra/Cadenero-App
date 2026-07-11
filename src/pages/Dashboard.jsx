@@ -8,6 +8,20 @@ import Header from "../components/Header";
 import ModalNuevoPrestamo from "../components/ModalNuevoPrestamo";
 import { agruparPorFecha } from "../utils/fechas";
 
+function esDeHoy(prestamo) {
+    const fechaIngreso = prestamo.fechaIngreso ? new Date(prestamo.fechaIngreso) : null;
+
+    if (!fechaIngreso || Number.isNaN(fechaIngreso.getTime())) return false;
+
+    const hoy = new Date();
+
+    return (
+        fechaIngreso.getFullYear() === hoy.getFullYear() &&
+        fechaIngreso.getMonth() === hoy.getMonth() &&
+        fechaIngreso.getDate() === hoy.getDate()
+    );
+}
+
 function Dashboard({
     prestamos,
     cargandoPrestamos,
@@ -23,6 +37,7 @@ function Dashboard({
     const [guardando, setGuardando] = useState(false);
     const gruposPorFecha = agruparPorFecha(prestamos);
     const nombreUsuario = usuario?.nombre || usuario?.email || "usuario";
+    const prestamosDeHoy = prestamos.filter(esDeHoy).length;
 
     function abrirNuevoPrestamo() {
         setPrestamoEditando(null);
@@ -51,7 +66,7 @@ function Dashboard({
 
             cerrarModal();
         } catch (error) {
-            alert("No se pudo guardar el préstamo.");
+            alert("No se pudo guardar el arriendo.");
             console.error(error);
         } finally {
             setGuardando(false);
@@ -62,7 +77,7 @@ function Dashboard({
         try {
             await onDevolverPrestamo(id);
         } catch (error) {
-            alert("No se pudo marcar el préstamo como devuelto.");
+            alert("No se pudo marcar el arriendo como devuelto.");
             console.error(error);
         }
     }
@@ -78,7 +93,7 @@ function Dashboard({
             await onEliminarPrestamo(prestamo);
         } catch (error) {
             alert(
-                "No se pudo eliminar el arriendo. Revisa que las politicas de eliminacion esten aplicadas en Supabase."
+                "No se pudo eliminar el arriendo. Revisa que las políticas de eliminación estén aplicadas en Supabase."
             );
             console.error(error);
         }
@@ -87,20 +102,31 @@ function Dashboard({
     return (
         <main className="dashboard">
             <header className="dashboard-header">
-                <h1 className="dashboard-title">Cadenero</h1>
+                <div className="dashboard-heading">
+                    <div>
+                        <p className="dashboard-label">Cadenero</p>
+                        <h1 className="dashboard-title">Hola, {nombreUsuario}</h1>
+                    </div>
+                </div>
 
-                <p className="dashboard-welcome">Bienvenido, {nombreUsuario}</p>
+                <div className="dashboard-summary" aria-label="Resumen de arriendos">
+                    <div className="summary-item">
+                        <span>{prestamos.length}</span>
+                        <p>Activos</p>
+                    </div>
 
-                <p className="dashboard-subtitle">
-                    {prestamos.length} préstamos activos
-                </p>
+                    <div className="summary-item">
+                        <span>{prestamosDeHoy}</span>
+                        <p>Hoy</p>
+                    </div>
+                </div>
             </header>
 
             <section className="cards-container">
                 {cargandoPrestamos ? (
-                    <p className="empty-state">Cargando préstamos...</p>
+                    <p className="empty-state">Cargando arriendos...</p>
                 ) : prestamos.length === 0 ? (
-                    <p className="empty-state">No hay préstamos activos.</p>
+                    <p className="empty-state">No hay arriendos activos.</p>
                 ) : (
                     gruposPorFecha.map((grupo) => (
                         <section className="date-group" key={grupo.clave}>

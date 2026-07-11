@@ -7,6 +7,17 @@
     display: flex;
     gap: 12px;
     min-width: 0;
+    transition:
+        opacity 0.18s ease,
+        filter 0.18s ease,
+        transform 0.18s ease;
+}
+
+.prestamo-card.is-partial {
+    opacity: 0.58;
+    filter: saturate(0.75);
+    pointer-events: none;
+    transform: scale(0.995);
 }
 
 .vehicle-image {

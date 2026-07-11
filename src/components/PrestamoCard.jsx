@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     FaCalendarAlt,
     FaCamera,
@@ -14,6 +14,8 @@ import {
 import { formatearHora } from "../utils/fechas";
 import "../styles/PrestamoCard.css";
 
+const zonaInferiorNoAccionable = 150;
+
 function obtenerFotos(prestamo) {
     const fotosVehiculo = Array.isArray(prestamo.fotosVehiculo)
         ? prestamo.fotosVehiculo.filter(Boolean)
@@ -28,13 +30,55 @@ function obtenerFotos(prestamo) {
 }
 
 function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
+    const cardRef = useRef(null);
     const [indiceGaleria, setIndiceGaleria] = useState(null);
+    const [estaCompletaEnPantalla, setEstaCompletaEnPantalla] = useState(true);
     const fotos = obtenerFotos(prestamo);
     const fotoPrincipal = fotos[0];
     const tieneFotos = fotos.length > 0;
     const estaDevuelto = prestamo.estado === "Devuelto";
     const horaIngreso = formatearHora(prestamo.fechaIngreso);
     const tipo = prestamo.tipo || "Arriendo";
+    const estaParcial = !estaCompletaEnPantalla && indiceGaleria === null;
+
+    useEffect(() => {
+        let frameId = null;
+
+        function medirVisibilidad() {
+            if (!cardRef.current) return;
+
+            const rect = cardRef.current.getBoundingClientRect();
+            const limiteInferior = window.innerHeight - zonaInferiorNoAccionable;
+            const completa =
+                rect.top >= 0 &&
+                rect.bottom <= limiteInferior &&
+                rect.height <= limiteInferior;
+
+            setEstaCompletaEnPantalla(completa);
+        }
+
+        function solicitarMedicion() {
+            if (frameId) return;
+
+            frameId = window.requestAnimationFrame(() => {
+                frameId = null;
+                medirVisibilidad();
+            });
+        }
+
+        medirVisibilidad();
+        window.addEventListener("scroll", solicitarMedicion, { passive: true });
+        window.addEventListener("resize", solicitarMedicion);
+
+        return () => {
+            if (frameId) {
+                window.cancelAnimationFrame(frameId);
+            }
+
+            window.removeEventListener("scroll", solicitarMedicion);
+            window.removeEventListener("resize", solicitarMedicion);
+        };
+    }, []);
 
     function mostrarFotoAnterior() {
         setIndiceGaleria((indiceActual) =>
@@ -49,7 +93,11 @@ function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
     }
 
     return (
-        <article className="prestamo-card">
+        <article
+            ref={cardRef}
+            className={`prestamo-card${estaParcial ? " is-partial" : ""}`}
+            aria-disabled={estaParcial}
+        >
             <div className="vehicle-image">
                 {tieneFotos ? (
                     <button

@@ -5,7 +5,7 @@ function FloatingButton({ onClick }) {
     return (
         <button
             className="floating-button"
-            aria-label="Nuevo préstamo"
+            aria-label="Nuevo arriendo"
             onClick={onClick}
         >
             <FaPlus />

@@ -96,6 +96,7 @@ with check (public.usuario_admin());
 
 create table if not exists public.prestamos (
     id text primary key,
+    tipo text not null default 'Arriendo' check (tipo in ('Arriendo', 'Porte')),
     dias integer not null,
     pago text not null,
     observaciones text default '',
@@ -111,6 +112,9 @@ create table if not exists public.prestamos (
 
 alter table public.prestamos add column if not exists usuario_id uuid references public.profiles(id);
 alter table public.prestamos add column if not exists fotos_vehiculo text[] not null default '{}';
+alter table public.prestamos add column if not exists tipo text not null default 'Arriendo';
+alter table public.prestamos drop constraint if exists prestamos_tipo_check;
+alter table public.prestamos add constraint prestamos_tipo_check check (tipo in ('Arriendo', 'Porte'));
 alter table public.prestamos enable row level security;
 
 drop policy if exists "Permitir lectura publica de prestamos" on public.prestamos;

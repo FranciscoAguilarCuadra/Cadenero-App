@@ -32,6 +32,7 @@ function normalizarPrestamo(prestamo) {
         fotosVehiculo.push(prestamoNormalizado.fotoVehiculo);
     }
 
+    prestamoNormalizado.tipo = prestamoNormalizado.tipo || "Arriendo";
     prestamoNormalizado.fotosVehiculo = fotosVehiculo;
     prestamoNormalizado.fotoVehiculo = fotosVehiculo[0] || "";
     delete prestamoNormalizado[campoLegacy];

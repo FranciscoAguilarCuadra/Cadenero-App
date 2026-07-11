@@ -14,6 +14,7 @@ function obtenerFotosVehiculo(prestamo) {
 function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando }) {
     const [formulario, setFormulario] = useState({
         id: prestamoEditando?.id || null,
+        tipo: prestamoEditando?.tipo || "Arriendo",
         dias: prestamoEditando?.dias || 1,
         pago: prestamoEditando?.pago || "Efectivo",
         observaciones: prestamoEditando?.observaciones || "",
@@ -143,7 +144,7 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
             <form className="modal-card" onSubmit={manejarSubmit}>
                 <div className="modal-header">
                     <h2>
-                        {prestamoEditando ? "Editar préstamo" : "Nuevo arriendo"}
+                        {prestamoEditando ? "Editar arriendo" : "Nuevo arriendo"}
                     </h2>
 
                     <button
@@ -230,6 +231,19 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
                 </label>
 
                 <label className="form-group">
+                    Tipo
+                    <select
+                        name="tipo"
+                        value={formulario.tipo}
+                        onChange={manejarCambio}
+                        disabled={guardando}
+                    >
+                        <option value="Arriendo">Arriendo</option>
+                        <option value="Porte">Porte</option>
+                    </select>
+                </label>
+
+                <label className="form-group">
                     Días
                     <select
                         name="dias"
@@ -276,7 +290,7 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
                         ? "Guardando..."
                         : prestamoEditando
                           ? "Guardar cambios"
-                          : "Guardar préstamo"}
+                          : "Guardar arriendo"}
                 </button>
             </form>
         </div>

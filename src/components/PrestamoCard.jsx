@@ -33,8 +33,8 @@ function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
     const fotoPrincipal = fotos[0];
     const tieneFotos = fotos.length > 0;
     const estaDevuelto = prestamo.estado === "Devuelto";
-    const codigo = String(prestamo.id).slice(-4);
     const horaIngreso = formatearHora(prestamo.fechaIngreso);
+    const tipo = prestamo.tipo || "Arriendo";
 
     function mostrarFotoAnterior() {
         setIndiceGaleria((indiceActual) =>
@@ -50,17 +50,6 @@ function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
 
     return (
         <article className="prestamo-card">
-            {onEliminar && (
-                <button
-                    type="button"
-                    className="delete-icon-button"
-                    onClick={() => onEliminar(prestamo)}
-                    aria-label="Eliminar arriendo"
-                >
-                    <FaTrash />
-                </button>
-            )}
-
             <div className="vehicle-image">
                 {tieneFotos ? (
                     <button
@@ -86,16 +75,26 @@ function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
             <div className="prestamo-info">
                 <div className="prestamo-header">
                     <div className="prestamo-title">
-                        <h2>Arriendo</h2>
-                        <span>
-                            ID {codigo}
-                            {horaIngreso ? ` · ${horaIngreso}` : ""}
-                        </span>
+                        <h2>{tipo}</h2>
+                        <span>{horaIngreso ? `Ingreso ${horaIngreso}` : "Sin hora"}</span>
                     </div>
 
-                    <span className={estaDevuelto ? "status returned" : "status active"}>
-                        {estaDevuelto ? "Devuelto" : "Activo"}
-                    </span>
+                    <div className="prestamo-meta-actions">
+                        <span className={estaDevuelto ? "status returned" : "status active"}>
+                            {estaDevuelto ? "Devuelto" : "Activo"}
+                        </span>
+
+                        {onEliminar && (
+                            <button
+                                type="button"
+                                className="delete-icon-button"
+                                onClick={() => onEliminar(prestamo)}
+                                aria-label="Eliminar arriendo"
+                            >
+                                <FaTrash />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="prestamo-details">

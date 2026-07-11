@@ -81,6 +81,7 @@ function desdeSupabase(prestamo) {
 
     return {
         id: prestamo.id,
+        tipo: prestamo.tipo || "Arriendo",
         dias: prestamo.dias,
         pago: prestamo.pago,
         observaciones: prestamo.observaciones || "",
@@ -108,6 +109,7 @@ async function haciaSupabase(prestamo) {
 
     return {
         id,
+        tipo: prestamo.tipo || "Arriendo",
         dias: Number(prestamo.dias),
         pago: prestamo.pago,
         observaciones: prestamo.observaciones || "",

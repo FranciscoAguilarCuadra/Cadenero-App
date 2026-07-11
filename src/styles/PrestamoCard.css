@@ -4,8 +4,12 @@
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 12px;
-    display: flex;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-areas:
+        "image main"
+        "buttons buttons";
+    gap: 10px 12px;
     min-width: 0;
     transition:
         opacity 0.18s ease,
@@ -21,12 +25,12 @@
 }
 
 .vehicle-image {
-    width: 84px;
-    height: 108px;
+    grid-area: image;
+    width: 96px;
+    height: 96px;
     border-radius: 10px;
     background: #eef2ff;
     overflow: hidden;
-    flex: 0 0 auto;
 }
 
 .vehicle-image-button {
@@ -75,9 +79,13 @@
     font-size: 12px;
 }
 
-.prestamo-info {
-    flex: 1;
+.prestamo-main {
+    grid-area: main;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 9px;
 }
 
 .prestamo-header {
@@ -85,7 +93,6 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 8px;
-    margin-bottom: 10px;
     min-width: 0;
 }
 
@@ -95,8 +102,8 @@
 
 .prestamo-title h2 {
     font-size: 20px;
-    line-height: 1.15;
-    margin-bottom: 3px;
+    line-height: 1.12;
+    margin-bottom: 4px;
 }
 
 .prestamo-title span {
@@ -116,8 +123,8 @@
 .status {
     flex: 0 0 auto;
     min-height: 34px;
-    min-width: 78px;
-    padding: 8px 10px;
+    min-width: 76px;
+    padding: 8px 9px;
     border-radius: 10px;
     font-size: 13px;
     font-weight: bold;
@@ -140,24 +147,28 @@
 }
 
 .prestamo-details {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
 }
 
 .prestamo-details p {
+    min-width: 0;
+    border-radius: 8px;
+    background: #f9fafb;
+    padding: 7px 8px;
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     color: var(--color-text-secondary);
-    font-size: 14px;
-    line-height: 1.25;
+    font-size: 13px;
+    line-height: 1.2;
 }
 
 .prestamo-buttons {
+    grid-area: buttons;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 8px;
 }
 
@@ -263,13 +274,14 @@
 
 @media (max-width: 340px) {
     .prestamo-card {
-        gap: 10px;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 9px 10px;
         padding: 10px;
     }
 
     .vehicle-image {
-        width: 76px;
-        height: 104px;
+        width: 88px;
+        height: 88px;
     }
 
     .prestamo-title h2 {
@@ -277,7 +289,7 @@
     }
 
     .status {
-        min-width: 72px;
+        min-width: 70px;
         font-size: 12px;
         padding-inline: 8px;
     }
@@ -287,8 +299,16 @@
         height: 36px;
     }
 
+    .prestamo-details {
+        gap: 6px;
+    }
+
+    .prestamo-details p,
+    .prestamo-buttons button {
+        font-size: 12px;
+    }
+
     .prestamo-buttons button {
         min-height: 40px;
-        font-size: 12px;
     }
 }

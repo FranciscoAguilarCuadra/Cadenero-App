@@ -121,17 +121,17 @@ function PrestamoCard({
                     </button>
                 ) : (
                     <div className="vehicle-placeholder">
-                        <FaCamera size={28} />
+                        <FaCamera size={26} />
                         <span>Sin foto</span>
                     </div>
                 )}
             </div>
 
-            <div className="prestamo-info">
+            <div className="prestamo-main">
                 <div className="prestamo-header">
                     <div className="prestamo-title">
                         <h2>{tipo}</h2>
-                        <span>{horaIngreso ? `Ingreso ${horaIngreso}` : "Sin hora"}</span>
+                        <span>{horaIngreso ? `Hora ${horaIngreso}` : "Sin hora"}</span>
                     </div>
 
                     <div className="prestamo-meta-actions">
@@ -163,41 +163,41 @@ function PrestamoCard({
                         {prestamo.dias} día{prestamo.dias > 1 ? "s" : ""}
                     </p>
                 </div>
+            </div>
 
-                <div className="prestamo-buttons">
-                    {!estaDevuelto && (
-                        <>
-                            <button
-                                type="button"
-                                className="edit-button"
-                                onClick={() => onEditar(prestamo)}
-                            >
-                                <FaEdit />
-                                Editar
-                            </button>
-
-                            <button
-                                type="button"
-                                className="return-button"
-                                onClick={() => onDevolver(prestamo.id)}
-                            >
-                                <FaCheckCircle />
-                                Devuelto
-                            </button>
-                        </>
-                    )}
-
-                    {estaDevuelto && onReactivar && (
+            <div className="prestamo-buttons">
+                {!estaDevuelto && (
+                    <>
                         <button
                             type="button"
-                            className="reactivate-button"
-                            onClick={() => onReactivar(prestamo)}
+                            className="edit-button"
+                            onClick={() => onEditar(prestamo)}
                         >
-                            <FaRedo />
-                            Reactivar
+                            <FaEdit />
+                            Editar
                         </button>
-                    )}
-                </div>
+
+                        <button
+                            type="button"
+                            className="return-button"
+                            onClick={() => onDevolver(prestamo.id)}
+                        >
+                            <FaCheckCircle />
+                            Devuelto
+                        </button>
+                    </>
+                )}
+
+                {estaDevuelto && onReactivar && (
+                    <button
+                        type="button"
+                        className="reactivate-button"
+                        onClick={() => onReactivar(prestamo)}
+                    >
+                        <FaRedo />
+                        Reactivar
+                    </button>
+                )}
             </div>
 
             {indiceGaleria !== null && (

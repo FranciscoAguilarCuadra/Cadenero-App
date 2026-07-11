@@ -20,6 +20,7 @@ function ModalNuevoPrestamo({
 }) {
     const [formulario, setFormulario] = useState({
         id: prestamoEditando?.id || null,
+        usuarioId: prestamoEditando?.usuarioId || null,
         tipo: prestamoEditando?.tipo || "Arriendo",
         dias: prestamoEditando?.dias || 1,
         pago: prestamoEditando?.pago || "Efectivo",
@@ -28,6 +29,7 @@ function ModalNuevoPrestamo({
         fotoGarantia: prestamoEditando?.fotoGarantia || "",
         estado: prestamoEditando?.estado || "Activo",
         fechaIngreso: prestamoEditando?.fechaIngreso || new Date().toISOString(),
+        fechaDevolucion: prestamoEditando?.fechaDevolucion || null,
     });
     const [errorFoto, setErrorFoto] = useState("");
 

@@ -18,6 +18,7 @@ import {
     guardarPrestamo as guardarPrestamoRemoto,
     marcarPrestamoDevuelto,
     obtenerPrestamos,
+    reactivarPrestamo as reactivarPrestamoRemoto,
 } from "./services/prestamosService";
 
 const campoLegacy = "ca" + "dena";
@@ -64,7 +65,7 @@ function App() {
                 const prestamosRemotos = await obtenerPrestamos(perfilUsuario);
                 setPrestamos(prestamosRemotos.map(normalizarPrestamo));
             } catch (error) {
-                alert("No se pudieron cargar los préstamos desde Supabase.");
+                alert("No se pudieron cargar los arriendos desde Supabase.");
                 console.error(error);
             } finally {
                 setCargandoPrestamos(false);
@@ -230,6 +231,33 @@ function App() {
         );
     }
 
+    async function reactivarPrestamo(prestamoReactivado) {
+        if (isSupabaseConfigured) {
+            const prestamoActivo = await reactivarPrestamoRemoto(prestamoReactivado.id);
+
+            setPrestamos((prestamosActuales) =>
+                prestamosActuales.map((prestamo) =>
+                    prestamo.id === prestamoActivo.id
+                        ? normalizarPrestamo(prestamoActivo)
+                        : prestamo
+                )
+            );
+            return;
+        }
+
+        setPrestamos((prestamosActuales) =>
+            prestamosActuales.map((prestamo) =>
+                prestamo.id === prestamoReactivado.id
+                    ? {
+                          ...prestamo,
+                          estado: "Activo",
+                          fechaDevolucion: null,
+                      }
+                    : prestamo
+            )
+        );
+    }
+
     async function eliminarPrestamo(prestamoEliminado) {
         if (isSupabaseConfigured) {
             await eliminarPrestamoRemoto(prestamoEliminado);
@@ -283,6 +311,7 @@ function App() {
                         prestamos={prestamosDevueltos}
                         usuario={perfil}
                         onEliminarPrestamo={eliminarPrestamo}
+                        onReactivarPrestamo={reactivarPrestamo}
                         onLogout={manejarLogout}
                     />
                 }

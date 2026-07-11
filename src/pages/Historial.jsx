@@ -4,7 +4,13 @@ import { agruparPorFecha } from "../utils/fechas";
 
 import "../styles/Dashboard.css";
 
-function Historial({ prestamos, usuario, onEliminarPrestamo, onLogout }) {
+function Historial({
+    prestamos,
+    usuario,
+    onEliminarPrestamo,
+    onReactivarPrestamo,
+    onLogout,
+}) {
     const gruposPorFecha = agruparPorFecha(prestamos);
 
     async function manejarEliminacion(prestamo) {
@@ -24,20 +30,35 @@ function Historial({ prestamos, usuario, onEliminarPrestamo, onLogout }) {
         }
     }
 
+    async function manejarReactivacion(prestamo) {
+        const confirmado = window.confirm(
+            "¿Volver este arriendo a Activo? Aparecerá nuevamente en la pantalla principal."
+        );
+
+        if (!confirmado) return;
+
+        try {
+            await onReactivarPrestamo(prestamo);
+        } catch (error) {
+            alert("No se pudo reactivar el arriendo.");
+            console.error(error);
+        }
+    }
+
     return (
         <main className="dashboard">
             <header className="dashboard-header">
                 <h1 className="dashboard-title">Historial</h1>
 
                 <p className="dashboard-subtitle">
-                    {prestamos.length} préstamos devueltos
+                    {prestamos.length} arriendos devueltos
                 </p>
             </header>
 
             <section className="cards-container">
                 {prestamos.length === 0 ? (
                     <p className="empty-state">
-                        No hay préstamos devueltos todavía.
+                        No hay arriendos devueltos todavía.
                     </p>
                 ) : (
                     gruposPorFecha.map((grupo) => (
@@ -50,6 +71,7 @@ function Historial({ prestamos, usuario, onEliminarPrestamo, onLogout }) {
                                         key={prestamo.id}
                                         prestamo={prestamo}
                                         onEliminar={manejarEliminacion}
+                                        onReactivar={manejarReactivacion}
                                     />
                                 ))}
                             </div>

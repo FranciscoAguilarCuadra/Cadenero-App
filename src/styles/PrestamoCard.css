@@ -182,6 +182,10 @@
     background: var(--color-success);
 }
 
+.reactivate-button {
+    background: var(--color-warning);
+}
+
 .delete-icon-button {
     width: 38px;
     height: 38px;

@@ -183,6 +183,25 @@ export async function marcarPrestamoDevuelto(id) {
     return desdeSupabase(data);
 }
 
+export async function reactivarPrestamo(id) {
+    validarConfiguracion();
+
+    const { data, error } = await supabase
+        .from(TABLA_PRESTAMOS)
+        .update({
+            estado: "Activo",
+            fecha_devolucion: null,
+            fecha_actualizacion: new Date().toISOString(),
+        })
+        .eq("id", String(id))
+        .select()
+        .single();
+
+    if (error) throw error;
+
+    return desdeSupabase(data);
+}
+
 export async function eliminarPrestamo(prestamo) {
     validarConfiguracion();
 

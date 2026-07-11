@@ -7,6 +7,7 @@ import {
     FaChevronRight,
     FaEdit,
     FaMoneyBillWave,
+    FaRedo,
     FaTimes,
     FaTrash,
 } from "react-icons/fa";
@@ -29,7 +30,13 @@ function obtenerFotos(prestamo) {
     return fotos.filter(Boolean);
 }
 
-function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
+function PrestamoCard({
+    prestamo,
+    onEditar,
+    onDevolver,
+    onEliminar,
+    onReactivar,
+}) {
     const cardRef = useRef(null);
     const [indiceGaleria, setIndiceGaleria] = useState(null);
     const [estaCompletaEnPantalla, setEstaCompletaEnPantalla] = useState(true);
@@ -178,6 +185,17 @@ function PrestamoCard({ prestamo, onEditar, onDevolver, onEliminar }) {
                                 Devuelto
                             </button>
                         </>
+                    )}
+
+                    {estaDevuelto && onReactivar && (
+                        <button
+                            type="button"
+                            className="reactivate-button"
+                            onClick={() => onReactivar(prestamo)}
+                        >
+                            <FaRedo />
+                            Reactivar
+                        </button>
                     )}
                 </div>
             </div>

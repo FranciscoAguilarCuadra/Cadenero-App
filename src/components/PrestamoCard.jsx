@@ -50,6 +50,8 @@ function PrestamoCard({
 
     useEffect(() => {
         let frameId = null;
+        let observer = null;
+        let timeoutId = null;
 
         function medirVisibilidad() {
             if (!cardRef.current) return;
@@ -74,6 +76,14 @@ function PrestamoCard({
         }
 
         medirVisibilidad();
+        timeoutId = window.setTimeout(solicitarMedicion, 120);
+
+        if ("ResizeObserver" in window && cardRef.current) {
+            observer = new ResizeObserver(solicitarMedicion);
+            observer.observe(cardRef.current);
+            observer.observe(document.body);
+        }
+
         window.addEventListener("scroll", solicitarMedicion, { passive: true });
         window.addEventListener("resize", solicitarMedicion);
 
@@ -82,10 +92,18 @@ function PrestamoCard({
                 window.cancelAnimationFrame(frameId);
             }
 
+            if (timeoutId) {
+                window.clearTimeout(timeoutId);
+            }
+
+            if (observer) {
+                observer.disconnect();
+            }
+
             window.removeEventListener("scroll", solicitarMedicion);
             window.removeEventListener("resize", solicitarMedicion);
         };
-    }, []);
+    }, [prestamo.id, prestamo.estado]);
 
     function mostrarFotoAnterior() {
         setIndiceGaleria((indiceActual) =>

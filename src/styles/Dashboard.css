@@ -89,6 +89,17 @@
     gap: 14px;
 }
 
+.app-message {
+    margin-bottom: 14px;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #991b1b;
+    padding: 11px 12px;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
 .date-group {
     display: flex;
     flex-direction: column;

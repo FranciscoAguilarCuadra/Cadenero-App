@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import Header from "../components/Header";
 import PrestamoCard from "../components/PrestamoCard";
 import { agruparPorFecha } from "../utils/fechas";
@@ -6,11 +8,13 @@ import "../styles/Dashboard.css";
 
 function Historial({
     prestamos,
+    mensajeExterno,
     usuario,
     onEliminarPrestamo,
     onReactivarPrestamo,
     onLogout,
 }) {
+    const [mensaje, setMensaje] = useState("");
     const gruposPorFecha = agruparPorFecha(prestamos);
 
     async function manejarEliminacion(prestamo) {
@@ -20,11 +24,13 @@ function Historial({
 
         if (!confirmado) return;
 
+        setMensaje("");
+
         try {
             await onEliminarPrestamo(prestamo);
         } catch (error) {
-            alert(
-                "No se pudo eliminar el arriendo. Revisa que las políticas de eliminación estén aplicadas en Supabase."
+            setMensaje(
+                "No se pudo eliminar el arriendo. Revisa tu conexión o las políticas de Supabase."
             );
             console.error(error);
         }
@@ -37,10 +43,14 @@ function Historial({
 
         if (!confirmado) return;
 
+        setMensaje("");
+
         try {
             await onReactivarPrestamo(prestamo);
         } catch (error) {
-            alert("No se pudo reactivar el arriendo.");
+            setMensaje(
+                "No se pudo reactivar el arriendo. Revisa tu conexión e intenta nuevamente."
+            );
             console.error(error);
         }
     }
@@ -54,6 +64,18 @@ function Historial({
                     {prestamos.length} arriendos devueltos
                 </p>
             </header>
+
+            {mensaje && (
+                <p className="app-message" role="alert">
+                    {mensaje}
+                </p>
+            )}
+
+            {!mensaje && mensajeExterno && (
+                <p className="app-message" role="alert">
+                    {mensajeExterno}
+                </p>
+            )}
 
             <section className="cards-container">
                 {prestamos.length === 0 ? (

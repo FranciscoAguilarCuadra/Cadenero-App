@@ -25,6 +25,7 @@ function esDeHoy(prestamo) {
 function Dashboard({
     prestamos,
     cargandoPrestamos,
+    mensajeExterno,
     usuario,
     onAgregarPrestamo,
     onEditarPrestamo,
@@ -35,16 +36,25 @@ function Dashboard({
     const [modalAbierto, setModalAbierto] = useState(false);
     const [prestamoEditando, setPrestamoEditando] = useState(null);
     const [guardando, setGuardando] = useState(false);
+    const [mensaje, setMensaje] = useState("");
+    const [errorModal, setErrorModal] = useState("");
     const gruposPorFecha = agruparPorFecha(prestamos);
     const nombreUsuario = usuario?.nombre || usuario?.email || "usuario";
     const prestamosDeHoy = prestamos.filter(esDeHoy).length;
 
+    function limpiarMensajes() {
+        setMensaje("");
+        setErrorModal("");
+    }
+
     function abrirNuevoPrestamo() {
+        limpiarMensajes();
         setPrestamoEditando(null);
         setModalAbierto(true);
     }
 
     function abrirEditarPrestamo(prestamo) {
+        limpiarMensajes();
         setPrestamoEditando(prestamo);
         setModalAbierto(true);
     }
@@ -52,10 +62,12 @@ function Dashboard({
     function cerrarModal() {
         setModalAbierto(false);
         setPrestamoEditando(null);
+        setErrorModal("");
     }
 
     async function guardarPrestamo(prestamo) {
         setGuardando(true);
+        setErrorModal("");
 
         try {
             if (prestamoEditando) {
@@ -66,7 +78,9 @@ function Dashboard({
 
             cerrarModal();
         } catch (error) {
-            alert("No se pudo guardar el arriendo.");
+            setErrorModal(
+                "No se pudo guardar el arriendo. Revisa tu conexión e intenta nuevamente."
+            );
             console.error(error);
         } finally {
             setGuardando(false);
@@ -74,10 +88,20 @@ function Dashboard({
     }
 
     async function manejarDevolucion(id) {
+        const confirmado = window.confirm(
+            "¿Marcar este arriendo como devuelto? Podrás reactivarlo desde el historial si fue un error."
+        );
+
+        if (!confirmado) return;
+
+        setMensaje("");
+
         try {
             await onDevolverPrestamo(id);
         } catch (error) {
-            alert("No se pudo marcar el arriendo como devuelto.");
+            setMensaje(
+                "No se pudo marcar el arriendo como devuelto. Revisa tu conexión e intenta nuevamente."
+            );
             console.error(error);
         }
     }
@@ -89,11 +113,13 @@ function Dashboard({
 
         if (!confirmado) return;
 
+        setMensaje("");
+
         try {
             await onEliminarPrestamo(prestamo);
         } catch (error) {
-            alert(
-                "No se pudo eliminar el arriendo. Revisa que las políticas de eliminación estén aplicadas en Supabase."
+            setMensaje(
+                "No se pudo eliminar el arriendo. Revisa tu conexión o las políticas de Supabase."
             );
             console.error(error);
         }
@@ -121,6 +147,18 @@ function Dashboard({
                     </div>
                 </div>
             </header>
+
+            {mensaje && (
+                <p className="app-message" role="alert">
+                    {mensaje}
+                </p>
+            )}
+
+            {!mensaje && mensajeExterno && (
+                <p className="app-message" role="alert">
+                    {mensajeExterno}
+                </p>
+            )}
 
             <section className="cards-container">
                 {cargandoPrestamos ? (
@@ -158,6 +196,7 @@ function Dashboard({
                     onClose={cerrarModal}
                     onGuardar={guardarPrestamo}
                     guardando={guardando}
+                    error={errorModal}
                 />
             )}
         </main>

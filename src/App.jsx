@@ -56,16 +56,20 @@ function App() {
     const [perfil, setPerfil] = useState(null);
     const [cargandoAuth, setCargandoAuth] = useState(isSupabaseConfigured);
     const [cargandoPrestamos, setCargandoPrestamos] = useState(false);
+    const [errorCargaPrestamos, setErrorCargaPrestamos] = useState("");
 
     const cargarPrestamosRemotos = useCallback(
         async function cargarPrestamosRemotos(perfilUsuario) {
             setCargandoPrestamos(true);
+            setErrorCargaPrestamos("");
 
             try {
                 const prestamosRemotos = await obtenerPrestamos(perfilUsuario);
                 setPrestamos(prestamosRemotos.map(normalizarPrestamo));
             } catch (error) {
-                alert("No se pudieron cargar los arriendos desde Supabase.");
+                setErrorCargaPrestamos(
+                    "No se pudieron cargar los arriendos. Revisa tu conexión e intenta nuevamente."
+                );
                 console.error(error);
             } finally {
                 setCargandoPrestamos(false);
@@ -294,6 +298,7 @@ function App() {
                     <Dashboard
                         prestamos={prestamosActivos}
                         cargandoPrestamos={cargandoPrestamos}
+                        mensajeExterno={errorCargaPrestamos}
                         usuario={perfil}
                         onAgregarPrestamo={agregarPrestamo}
                         onEditarPrestamo={editarPrestamo}
@@ -309,6 +314,7 @@ function App() {
                 element={
                     <Historial
                         prestamos={prestamosDevueltos}
+                        mensajeExterno={errorCargaPrestamos}
                         usuario={perfil}
                         onEliminarPrestamo={eliminarPrestamo}
                         onReactivarPrestamo={reactivarPrestamo}

@@ -11,7 +11,13 @@ function obtenerFotosVehiculo(prestamo) {
     return prestamo?.fotoVehiculo ? [prestamo.fotoVehiculo] : [];
 }
 
-function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando }) {
+function ModalNuevoPrestamo({
+    prestamoEditando,
+    onClose,
+    onGuardar,
+    guardando,
+    error,
+}) {
     const [formulario, setFormulario] = useState({
         id: prestamoEditando?.id || null,
         tipo: prestamoEditando?.tipo || "Arriendo",
@@ -23,6 +29,7 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
         estado: prestamoEditando?.estado || "Activo",
         fechaIngreso: prestamoEditando?.fechaIngreso || new Date().toISOString(),
     });
+    const [errorFoto, setErrorFoto] = useState("");
 
     function manejarCambio(event) {
         const { name, value } = event.target;
@@ -83,6 +90,8 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
 
         if (archivos.length === 0) return;
 
+        setErrorFoto("");
+
         try {
             const imagenesComprimidas = await comprimirArchivos(archivos);
 
@@ -94,7 +103,7 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
                 ],
             }));
         } catch {
-            alert("No se pudo cargar la imagen. Intenta con otra foto.");
+            setErrorFoto("No se pudo cargar la imagen. Intenta con otra foto.");
         } finally {
             event.target.value = "";
         }
@@ -105,6 +114,8 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
 
         if (!archivo) return;
 
+        setErrorFoto("");
+
         try {
             const imagenComprimida = await comprimirImagen(archivo);
 
@@ -113,7 +124,7 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
                 fotoGarantia: imagenComprimida,
             }));
         } catch {
-            alert("No se pudo cargar la imagen. Intenta con otra foto.");
+            setErrorFoto("No se pudo cargar la imagen. Intenta con otra foto.");
         } finally {
             event.target.value = "";
         }
@@ -148,7 +159,11 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
 
     return (
         <div className="modal-overlay">
-            <form className="modal-card" onSubmit={manejarSubmit}>
+            <form
+                className="modal-card"
+                onSubmit={manejarSubmit}
+                aria-busy={guardando}
+            >
                 <div className="modal-header">
                     <h2>
                         {prestamoEditando ? "Editar arriendo" : "Nuevo arriendo"}
@@ -163,6 +178,12 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
                         <FaTimes />
                     </button>
                 </div>
+
+                {(error || errorFoto) && (
+                    <p className="modal-error" role="alert">
+                        {error || errorFoto}
+                    </p>
+                )}
 
                 <div className="photo-section">
                     <div className="photo-section-header">
@@ -302,10 +323,16 @@ function ModalNuevoPrestamo({ prestamoEditando, onClose, onGuardar, guardando })
                     />
                 </label>
 
+                {guardando && (
+                    <p className="save-status">
+                        Subiendo fotos y guardando datos...
+                    </p>
+                )}
+
                 <button type="submit" className="save-button" disabled={guardando}>
                     <FaSave />
                     {guardando
-                        ? "Guardando..."
+                        ? "Guardando arriendo..."
                         : prestamoEditando
                           ? "Guardar cambios"
                           : "Guardar arriendo"}

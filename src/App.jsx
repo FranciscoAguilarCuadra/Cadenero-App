@@ -281,6 +281,7 @@ function App() {
                     <Historial
                         prestamos={prestamosDevueltos}
                         usuario={perfil}
+                        onEliminarPrestamo={eliminarPrestamo}
                         onLogout={manejarLogout}
                     />
                 }

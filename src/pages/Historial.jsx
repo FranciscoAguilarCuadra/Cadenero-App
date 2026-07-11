@@ -4,8 +4,25 @@ import { agruparPorFecha } from "../utils/fechas";
 
 import "../styles/Dashboard.css";
 
-function Historial({ prestamos, usuario, onLogout }) {
+function Historial({ prestamos, usuario, onEliminarPrestamo, onLogout }) {
     const gruposPorFecha = agruparPorFecha(prestamos);
+
+    async function manejarEliminacion(prestamo) {
+        const confirmado = window.confirm(
+            "¿Eliminar este arriendo del historial? Esta acción no se puede deshacer."
+        );
+
+        if (!confirmado) return;
+
+        try {
+            await onEliminarPrestamo(prestamo);
+        } catch (error) {
+            alert(
+                "No se pudo eliminar el arriendo. Revisa que las políticas de eliminación estén aplicadas en Supabase."
+            );
+            console.error(error);
+        }
+    }
 
     return (
         <main className="dashboard">
@@ -32,6 +49,7 @@ function Historial({ prestamos, usuario, onLogout }) {
                                     <PrestamoCard
                                         key={prestamo.id}
                                         prestamo={prestamo}
+                                        onEliminar={manejarEliminacion}
                                     />
                                 ))}
                             </div>

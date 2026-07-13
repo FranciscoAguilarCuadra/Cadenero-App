@@ -18,9 +18,11 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function obtenerSecretKey() {
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const secretKey =
+        Deno.env.get("CADENERO_ADMIN_SECRET_KEY") ||
+        Deno.env.get("CREAR_USUARIOS_ADMIN_KEY");
 
-    if (serviceRoleKey) return serviceRoleKey;
+    if (secretKey) return secretKey;
 
     const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
 
@@ -32,7 +34,7 @@ function obtenerSecretKey() {
             (value) => typeof value === "string"
         );
 
-        return keys.service_role || keys.secret || primeraKey || "";
+        return keys.crear_usuarios_admin || keys.service_role || primeraKey || "";
     } catch {
         return "";
     }

@@ -6,6 +6,7 @@ import PrestamoCard from "../components/PrestamoCard";
 import FloatingButton from "../components/FloatingButton";
 import Header from "../components/Header";
 import ModalNuevoPrestamo from "../components/ModalNuevoPrestamo";
+import AppDialog from "../components/AppDialog";
 import { agruparPorFecha } from "../utils/fechas";
 
 function esDeHoy(prestamo) {
@@ -36,15 +37,16 @@ function Dashboard({
     const [modalAbierto, setModalAbierto] = useState(false);
     const [prestamoEditando, setPrestamoEditando] = useState(null);
     const [guardando, setGuardando] = useState(false);
-    const [mensaje, setMensaje] = useState("");
     const [errorModal, setErrorModal] = useState("");
+    const [dialogo, setDialogo] = useState(null);
+    const [procesandoDialogo, setProcesandoDialogo] = useState(false);
     const gruposPorFecha = agruparPorFecha(prestamos);
     const nombreUsuario = usuario?.nombre || usuario?.email || "usuario";
     const prestamosDeHoy = prestamos.filter(esDeHoy).length;
 
     function limpiarMensajes() {
-        setMensaje("");
         setErrorModal("");
+        setDialogo(null);
     }
 
     function abrirNuevoPrestamo() {
@@ -79,7 +81,7 @@ function Dashboard({
             cerrarModal();
         } catch (error) {
             setErrorModal(
-                "No se pudo guardar el arriendo. Revisa tu conexión e intenta nuevamente."
+                "No se pudo guardar el arriendo. Revisa tu conexion e intenta nuevamente."
             );
             console.error(error);
         } finally {
@@ -87,42 +89,74 @@ function Dashboard({
         }
     }
 
-    async function manejarDevolucion(id) {
-        const confirmado = window.confirm(
-            "¿Marcar este arriendo como devuelto? Podrás reactivarlo desde el historial si fue un error."
-        );
+    function cerrarDialogo() {
+        if (procesandoDialogo) return;
 
-        if (!confirmado) return;
-
-        setMensaje("");
-
-        try {
-            await onDevolverPrestamo(id);
-        } catch (error) {
-            setMensaje(
-                "No se pudo marcar el arriendo como devuelto. Revisa tu conexión e intenta nuevamente."
-            );
-            console.error(error);
-        }
+        setDialogo(null);
     }
 
-    async function manejarEliminacion(prestamo) {
-        const confirmado = window.confirm(
-            "¿Eliminar este arriendo? Esta acción no se puede deshacer."
-        );
+    function mostrarErrorAccion(title, message) {
+        setDialogo({
+            title,
+            message,
+            variant: "danger",
+            confirmLabel: "Entendido",
+            onConfirm: () => setDialogo(null),
+        });
+    }
 
-        if (!confirmado) return;
+    function manejarDevolucion(id) {
+        setDialogo({
+            title: "Marcar como devuelto",
+            message:
+                "El arriendo pasara al historial. Si fue un error, podras reactivarlo desde ahi.",
+            variant: "warning",
+            confirmLabel: "Devolver",
+            cancelLabel: "Cancelar",
+            onConfirm: async () => {
+                setProcesandoDialogo(true);
 
-        setMensaje("");
+                try {
+                    await onDevolverPrestamo(id);
+                    setDialogo(null);
+                } catch (error) {
+                    console.error(error);
+                    mostrarErrorAccion(
+                        "No se pudo devolver",
+                        "No se pudo marcar el arriendo como devuelto. Revisa tu conexion e intenta nuevamente."
+                    );
+                } finally {
+                    setProcesandoDialogo(false);
+                }
+            },
+        });
+    }
 
-        try {
-            await onEliminarPrestamo(prestamo);
-        } catch (error) {
-            setMensaje(
-                "No se pudo eliminar el arriendo. Revisa tu conexión o las políticas de Supabase."
-            );
-            console.error(error);
-        }
+    function manejarEliminacion(prestamo) {
+        setDialogo({
+            title: "Eliminar arriendo",
+            message:
+                "Esta accion no se puede deshacer y eliminara sus fotografias asociadas.",
+            variant: "danger",
+            confirmLabel: "Eliminar",
+            cancelLabel: "Cancelar",
+            onConfirm: async () => {
+                setProcesandoDialogo(true);
+
+                try {
+                    await onEliminarPrestamo(prestamo);
+                    setDialogo(null);
+                } catch (error) {
+                    console.error(error);
+                    mostrarErrorAccion(
+                        "No se pudo eliminar",
+                        "No se pudo eliminar el arriendo. Revisa tu conexion o las politicas de Supabase."
+                    );
+                } finally {
+                    setProcesandoDialogo(false);
+                }
+            },
+        });
     }
 
     return (
@@ -148,13 +182,7 @@ function Dashboard({
                 </div>
             </header>
 
-            {mensaje && (
-                <p className="app-message" role="alert">
-                    {mensaje}
-                </p>
-            )}
-
-            {!mensaje && mensajeExterno && (
+            {mensajeExterno && (
                 <p className="app-message" role="alert">
                     {mensajeExterno}
                 </p>
@@ -197,6 +225,14 @@ function Dashboard({
                     onGuardar={guardarPrestamo}
                     guardando={guardando}
                     error={errorModal}
+                />
+            )}
+
+            {dialogo && (
+                <AppDialog
+                    {...dialogo}
+                    isProcessing={procesandoDialogo}
+                    onCancel={cerrarDialogo}
                 />
             )}
         </main>

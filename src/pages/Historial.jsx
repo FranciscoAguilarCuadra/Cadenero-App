@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import AppDialog from "../components/AppDialog";
 import Header from "../components/Header";
 import PrestamoCard from "../components/PrestamoCard";
 import { agruparPorFecha } from "../utils/fechas";
@@ -14,45 +15,78 @@ function Historial({
     onReactivarPrestamo,
     onLogout,
 }) {
-    const [mensaje, setMensaje] = useState("");
+    const [dialogo, setDialogo] = useState(null);
+    const [procesandoDialogo, setProcesandoDialogo] = useState(false);
     const gruposPorFecha = agruparPorFecha(prestamos);
 
-    async function manejarEliminacion(prestamo) {
-        const confirmado = window.confirm(
-            "¿Eliminar este arriendo del historial? Esta acción no se puede deshacer."
-        );
+    function cerrarDialogo() {
+        if (procesandoDialogo) return;
 
-        if (!confirmado) return;
-
-        setMensaje("");
-
-        try {
-            await onEliminarPrestamo(prestamo);
-        } catch (error) {
-            setMensaje(
-                "No se pudo eliminar el arriendo. Revisa tu conexión o las políticas de Supabase."
-            );
-            console.error(error);
-        }
+        setDialogo(null);
     }
 
-    async function manejarReactivacion(prestamo) {
-        const confirmado = window.confirm(
-            "¿Volver este arriendo a Activo? Aparecerá nuevamente en la pantalla principal."
-        );
+    function mostrarErrorAccion(title, message) {
+        setDialogo({
+            title,
+            message,
+            variant: "danger",
+            confirmLabel: "Entendido",
+            onConfirm: () => setDialogo(null),
+        });
+    }
 
-        if (!confirmado) return;
+    function manejarEliminacion(prestamo) {
+        setDialogo({
+            title: "Eliminar del historial",
+            message:
+                "Esta accion no se puede deshacer y eliminara las fotografias asociadas.",
+            variant: "danger",
+            confirmLabel: "Eliminar",
+            cancelLabel: "Cancelar",
+            onConfirm: async () => {
+                setProcesandoDialogo(true);
 
-        setMensaje("");
+                try {
+                    await onEliminarPrestamo(prestamo);
+                    setDialogo(null);
+                } catch (error) {
+                    console.error(error);
+                    mostrarErrorAccion(
+                        "No se pudo eliminar",
+                        "No se pudo eliminar el arriendo. Revisa tu conexion o las politicas de Supabase."
+                    );
+                } finally {
+                    setProcesandoDialogo(false);
+                }
+            },
+        });
+    }
 
-        try {
-            await onReactivarPrestamo(prestamo);
-        } catch (error) {
-            setMensaje(
-                "No se pudo reactivar el arriendo. Revisa tu conexión e intenta nuevamente."
-            );
-            console.error(error);
-        }
+    function manejarReactivacion(prestamo) {
+        setDialogo({
+            title: "Reactivar arriendo",
+            message:
+                "El arriendo volvera a la pantalla principal como activo.",
+            variant: "warning",
+            confirmLabel: "Reactivar",
+            cancelLabel: "Cancelar",
+            onConfirm: async () => {
+                setProcesandoDialogo(true);
+
+                try {
+                    await onReactivarPrestamo(prestamo);
+                    setDialogo(null);
+                } catch (error) {
+                    console.error(error);
+                    mostrarErrorAccion(
+                        "No se pudo reactivar",
+                        "No se pudo reactivar el arriendo. Revisa tu conexion e intenta nuevamente."
+                    );
+                } finally {
+                    setProcesandoDialogo(false);
+                }
+            },
+        });
     }
 
     return (
@@ -65,13 +99,7 @@ function Historial({
                 </p>
             </header>
 
-            {mensaje && (
-                <p className="app-message" role="alert">
-                    {mensaje}
-                </p>
-            )}
-
-            {!mensaje && mensajeExterno && (
+            {mensajeExterno && (
                 <p className="app-message" role="alert">
                     {mensajeExterno}
                 </p>
@@ -80,7 +108,7 @@ function Historial({
             <section className="cards-container">
                 {prestamos.length === 0 ? (
                     <p className="empty-state">
-                        No hay arriendos devueltos todavía.
+                        No hay arriendos devueltos todavia.
                     </p>
                 ) : (
                     gruposPorFecha.map((grupo) => (
@@ -103,6 +131,14 @@ function Historial({
             </section>
 
             <Header usuario={usuario} onLogout={onLogout} />
+
+            {dialogo && (
+                <AppDialog
+                    {...dialogo}
+                    isProcessing={procesandoDialogo}
+                    onCancel={cerrarDialogo}
+                />
+            )}
         </main>
     );
 }

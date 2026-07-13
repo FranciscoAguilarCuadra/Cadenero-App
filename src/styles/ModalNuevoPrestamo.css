@@ -112,7 +112,7 @@
 
 .warranty-photo {
     width: 100%;
-    height: 96px;
+    height: 150px;
 }
 
 .warranty-photo-field {
@@ -122,16 +122,17 @@
 .warranty-photo-preview {
     position: relative;
     width: 100%;
-    height: 96px;
+    height: 150px;
     border-radius: 14px;
     overflow: hidden;
-    background: #eef2ff;
+    background: #f8fafc;
+    border: 1px solid #dbeafe;
 }
 
 .warranty-photo-preview img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .warranty-photo-preview button {

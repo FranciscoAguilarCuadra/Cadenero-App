@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { FaHome, FaHistory, FaSignOutAlt } from "react-icons/fa";
+import { FaHome, FaHistory, FaSignOutAlt, FaUsersCog } from "react-icons/fa";
 
 import "../styles/Header.css";
 
@@ -26,6 +26,18 @@ function Header({ usuario, onLogout }) {
                 <FaHistory size={20} />
                 <span>Historial</span>
             </NavLink>
+
+            {usuario?.rol === "admin" && (
+                <NavLink
+                    to="/admin"
+                    className={({ isActive }) =>
+                        isActive ? "nav-item active" : "nav-item"
+                    }
+                >
+                    <FaUsersCog size={20} />
+                    <span>Admin</span>
+                </NavLink>
+            )}
 
             {onLogout && (
                 <button

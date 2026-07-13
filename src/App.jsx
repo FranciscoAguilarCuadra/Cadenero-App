@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import Admin from "./pages/Admin";
 import Dashboard from "./pages/Dashboard";
 import Historial from "./pages/Historial";
 import Login from "./pages/Login";
@@ -320,6 +321,21 @@ function App() {
                         onReactivarPrestamo={reactivarPrestamo}
                         onLogout={manejarLogout}
                     />
+                }
+            />
+
+            <Route
+                path="/admin"
+                element={
+                    perfil?.rol === "admin" ? (
+                        <Admin
+                            usuarioActual={perfil}
+                            onLogout={manejarLogout}
+                            onUsuarioActualizado={setPerfil}
+                        />
+                    ) : (
+                        <Navigate to="/" replace />
+                    )
                 }
             />
 

@@ -62,3 +62,36 @@ export async function obtenerPerfilUsuario(userId) {
 
     return data;
 }
+
+export async function obtenerUsuarios() {
+    validarConfiguracion();
+
+    const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, nombre, rol, activo, fecha_creacion")
+        .order("fecha_creacion", { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+}
+
+export async function actualizarUsuario(usuario) {
+    validarConfiguracion();
+
+    const { data, error } = await supabase
+        .from("profiles")
+        .update({
+            nombre: usuario.nombre,
+            rol: usuario.rol,
+            activo: usuario.activo,
+            fecha_actualizacion: new Date().toISOString(),
+        })
+        .eq("id", usuario.id)
+        .select("id, email, nombre, rol, activo, fecha_creacion")
+        .single();
+
+    if (error) throw error;
+
+    return data;
+}

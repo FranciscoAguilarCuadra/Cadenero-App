@@ -166,179 +166,186 @@ function ModalNuevoPrestamo({
                 onSubmit={manejarSubmit}
                 aria-busy={guardando}
             >
-                <div className="modal-header">
-                    <h2>
-                        {prestamoEditando ? "Editar arriendo" : "Nuevo arriendo"}
-                    </h2>
+                <div className="modal-scroll">
+                    <div className="modal-header">
+                        <h2>
+                            {prestamoEditando ? "Editar arriendo" : "Nuevo arriendo"}
+                        </h2>
 
-                    <button
-                        type="button"
-                        className="close-button"
-                        onClick={onClose}
-                        disabled={guardando}
-                    >
-                        <FaTimes />
-                    </button>
-                </div>
-
-                {(error || errorFoto) && (
-                    <p className="modal-error" role="alert">
-                        {error || errorFoto}
-                    </p>
-                )}
-
-                <div className="photo-section">
-                    <div className="photo-section-header">
-                        <span>Fotos vehículo</span>
-
-                        <label className="photo-add-button">
-                            <FaCamera />
-                            Agregar
-                            <input
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                multiple
-                                onChange={manejarFotosVehiculo}
-                                disabled={guardando}
-                            />
-                        </label>
+                        <button
+                            type="button"
+                            className="close-button"
+                            onClick={onClose}
+                            disabled={guardando}
+                        >
+                            <FaTimes />
+                        </button>
                     </div>
 
-                    {formulario.fotosVehiculo.length > 0 ? (
-                        <div className="vehicle-photo-grid">
-                            {formulario.fotosVehiculo.map((foto, indice) => (
-                                <div className="vehicle-photo-item" key={`${foto}-${indice}`}>
-                                    <img
-                                        src={foto}
-                                        alt={`Vehículo ${indice + 1}`}
-                                    />
+                    {(error || errorFoto) && (
+                        <p className="modal-error" role="alert">
+                            {error || errorFoto}
+                        </p>
+                    )}
 
-                                    <button
-                                        type="button"
-                                        onClick={() => eliminarFotoVehiculo(indice)}
-                                        aria-label="Eliminar foto"
-                                        disabled={guardando}
+                    <div className="photo-section">
+                        <div className="photo-section-header">
+                            <span>Fotos vehículo</span>
+
+                            <label className="photo-add-button">
+                                <FaCamera />
+                                Agregar
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    multiple
+                                    onChange={manejarFotosVehiculo}
+                                    disabled={guardando}
+                                />
+                            </label>
+                        </div>
+
+                        {formulario.fotosVehiculo.length > 0 ? (
+                            <div className="vehicle-photo-grid">
+                                {formulario.fotosVehiculo.map((foto, indice) => (
+                                    <div
+                                        className="vehicle-photo-item"
+                                        key={`${foto}-${indice}`}
                                     >
-                                        <FaTrash />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <label className="photo-button photo-button-wide">
-                            <FaCamera />
-                            Foto vehículo
-                            <input
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                multiple
-                                onChange={manejarFotosVehiculo}
-                                disabled={guardando}
-                            />
-                        </label>
-                    )}
+                                        <img
+                                            src={foto}
+                                            alt={`Vehículo ${indice + 1}`}
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => eliminarFotoVehiculo(indice)}
+                                            aria-label="Eliminar foto"
+                                            disabled={guardando}
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <label className="photo-button photo-button-wide">
+                                <FaCamera />
+                                Foto vehículo
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    multiple
+                                    onChange={manejarFotosVehiculo}
+                                    disabled={guardando}
+                                />
+                            </label>
+                        )}
+                    </div>
+
+                    <div className="warranty-photo-field">
+                        {formulario.fotoGarantia ? (
+                            <div className="warranty-photo-preview">
+                                <img src={formulario.fotoGarantia} alt="Garantía" />
+
+                                <button
+                                    type="button"
+                                    onClick={eliminarFotoGarantia}
+                                    aria-label="Eliminar foto de garantía"
+                                    disabled={guardando}
+                                >
+                                    <FaTrash />
+                                </button>
+                            </div>
+                        ) : (
+                            <label className="photo-button warranty-photo">
+                                <FaCamera />
+                                Foto garantía
+
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={manejarFotoGarantia}
+                                    disabled={guardando}
+                                />
+                            </label>
+                        )}
+                    </div>
+
+                    <label className="form-group">
+                        Tipo
+                        <select
+                            name="tipo"
+                            value={formulario.tipo}
+                            onChange={manejarCambio}
+                            disabled={guardando}
+                        >
+                            <option value="Arriendo">Arriendo</option>
+                            <option value="Porte">Porte</option>
+                        </select>
+                    </label>
+
+                    <label className="form-group">
+                        Días
+                        <select
+                            name="dias"
+                            value={formulario.dias}
+                            onChange={manejarCambio}
+                            disabled={guardando}
+                        >
+                            <option value="1">1 día</option>
+                            <option value="2">2 días</option>
+                            <option value="3">3 días</option>
+                            <option value="4">4 días</option>
+                            <option value="5">5 días</option>
+                            <option value="7">7 días</option>
+                        </select>
+                    </label>
+
+                    <label className="form-group">
+                        Pago
+                        <select
+                            name="pago"
+                            value={formulario.pago}
+                            onChange={manejarCambio}
+                            disabled={guardando}
+                        >
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                        </select>
+                    </label>
+
+                    <label className="form-group">
+                        Observaciones
+                        <textarea
+                            name="observaciones"
+                            placeholder="Opcional"
+                            value={formulario.observaciones}
+                            onChange={manejarCambio}
+                            disabled={guardando}
+                        />
+                    </label>
                 </div>
 
-                <div className="warranty-photo-field">
-                    {formulario.fotoGarantia ? (
-                        <div className="warranty-photo-preview">
-                            <img src={formulario.fotoGarantia} alt="Garantía" />
-
-                            <button
-                                type="button"
-                                onClick={eliminarFotoGarantia}
-                                aria-label="Eliminar foto de garantía"
-                                disabled={guardando}
-                            >
-                                <FaTrash />
-                            </button>
-                        </div>
-                    ) : (
-                        <label className="photo-button warranty-photo">
-                            <FaCamera />
-                            Foto garantía
-
-                            <input
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                onChange={manejarFotoGarantia}
-                                disabled={guardando}
-                            />
-                        </label>
+                <div className="modal-actions">
+                    {guardando && (
+                        <p className="save-status">
+                            Subiendo fotos y guardando datos...
+                        </p>
                     )}
+
+                    <button type="submit" className="save-button" disabled={guardando}>
+                        <FaSave />
+                        {guardando
+                            ? "Guardando arriendo..."
+                            : prestamoEditando
+                              ? "Guardar cambios"
+                              : "Guardar arriendo"}
+                    </button>
                 </div>
-
-                <label className="form-group">
-                    Tipo
-                    <select
-                        name="tipo"
-                        value={formulario.tipo}
-                        onChange={manejarCambio}
-                        disabled={guardando}
-                    >
-                        <option value="Arriendo">Arriendo</option>
-                        <option value="Porte">Porte</option>
-                    </select>
-                </label>
-
-                <label className="form-group">
-                    Días
-                    <select
-                        name="dias"
-                        value={formulario.dias}
-                        onChange={manejarCambio}
-                        disabled={guardando}
-                    >
-                        <option value="1">1 día</option>
-                        <option value="2">2 días</option>
-                        <option value="3">3 días</option>
-                        <option value="4">4 días</option>
-                        <option value="5">5 días</option>
-                        <option value="7">7 días</option>
-                    </select>
-                </label>
-
-                <label className="form-group">
-                    Pago
-                    <select
-                        name="pago"
-                        value={formulario.pago}
-                        onChange={manejarCambio}
-                        disabled={guardando}
-                    >
-                        <option value="Efectivo">Efectivo</option>
-                        <option value="Transferencia">Transferencia</option>
-                    </select>
-                </label>
-
-                <label className="form-group">
-                    Observaciones
-                    <textarea
-                        name="observaciones"
-                        placeholder="Opcional"
-                        value={formulario.observaciones}
-                        onChange={manejarCambio}
-                        disabled={guardando}
-                    />
-                </label>
-
-                {guardando && (
-                    <p className="save-status">
-                        Subiendo fotos y guardando datos...
-                    </p>
-                )}
-
-                <button type="submit" className="save-button" disabled={guardando}>
-                    <FaSave />
-                    {guardando
-                        ? "Guardando arriendo..."
-                        : prestamoEditando
-                          ? "Guardar cambios"
-                          : "Guardar arriendo"}
-                </button>
             </form>
         </div>
     );

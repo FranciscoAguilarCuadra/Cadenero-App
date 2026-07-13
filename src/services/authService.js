@@ -95,3 +95,19 @@ export async function actualizarUsuario(usuario) {
 
     return data;
 }
+
+export async function crearUsuario(usuario) {
+    validarConfiguracion();
+
+    const { data, error } = await supabase.functions.invoke("crear-usuario", {
+        body: usuario,
+    });
+
+    if (error) throw error;
+
+    if (data?.error) {
+        throw new Error(data.error);
+    }
+
+    return data.usuario;
+}

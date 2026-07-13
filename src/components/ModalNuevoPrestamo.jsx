@@ -11,6 +11,16 @@ function obtenerFotosVehiculo(prestamo) {
     return prestamo?.fotoVehiculo ? [prestamo.fotoVehiculo] : [];
 }
 
+function obtenerEspaciosFotos(cantidadFotos) {
+    if (cantidadFotos === 0 || cantidadFotos % 3 === 0) return [];
+
+    const espaciosFaltantes = 3 - (cantidadFotos % 3);
+
+    return Array.from({ length: espaciosFaltantes }, (_, indice) => ({
+        numero: cantidadFotos + indice + 1,
+    }));
+}
+
 function ModalNuevoPrestamo({
     prestamoEditando,
     onClose,
@@ -32,6 +42,9 @@ function ModalNuevoPrestamo({
         fechaDevolucion: prestamoEditando?.fechaDevolucion || null,
     });
     const [errorFoto, setErrorFoto] = useState("");
+    const espaciosFotosVehiculo = obtenerEspaciosFotos(
+        formulario.fotosVehiculo.length
+    );
 
     function manejarCambio(event) {
         const { name, value } = event.target;
@@ -223,6 +236,24 @@ function ModalNuevoPrestamo({
                                         <FaTrash />
                                     </button>
                                 </div>
+                            ))}
+
+                            {espaciosFotosVehiculo.map((espacio) => (
+                                <label
+                                    className="vehicle-photo-placeholder"
+                                    key={`foto-${espacio.numero}`}
+                                >
+                                    <FaCamera />
+                                    Foto {espacio.numero}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        multiple
+                                        onChange={manejarFotosVehiculo}
+                                        disabled={guardando}
+                                    />
+                                </label>
                             ))}
                         </div>
                     ) : (

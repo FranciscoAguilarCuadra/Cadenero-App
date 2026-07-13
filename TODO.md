@@ -1,30 +1,29 @@
 # TODO
 
-## Versión 1.0.0
+## Version 1.0.0
 
-* [x] Crear estructura base del proyecto
-* [x] Configurar React Router
-* [x] Crear Dashboard
-* [x] Crear Header
-* [x] Crear botón flotante
-* [x] Crear datos de prueba
-* [x] Crear Modal Nuevo Préstamo
-* [x] Conectar Supabase
-* [x] Guardar fotografías
-* [x] Crear historial
-* [x] Marcar préstamo como devuelto
+- [x] Crear estructura base del proyecto
+- [x] Configurar React Router
+- [x] Crear Dashboard
+- [x] Crear Header
+- [x] Crear boton flotante
+- [x] Crear datos de prueba
+- [x] Crear modal de nuevo arriendo
+- [x] Conectar Supabase
+- [x] Guardar fotografias
+- [x] Crear historial
+- [x] Marcar arriendo como devuelto
+- [x] Revertir arriendo devuelto a activo
+- [x] Eliminar arriendos con confirmacion
+- [x] Diferenciar arriendo y porte
+- [x] Optimizar diseno movil
+- [x] Formalizar documentacion de release
 
-## Login cerrado
+## Post 1.0.0
 
-* [x] Agregar inicio de sesión
-* [x] Evitar registro público
-* [x] Agregar perfiles con rol y estado activo
-* [x] Bloquear cuentas inactivas
-* [x] Agregar cierre de sesión
-
-## Próximas correcciones
-
-* [ ] Ejecutar SQL actualizado en Supabase
-* [ ] Crear y activar el primer usuario admin
-* [ ] Probar login en teléfono
-* [ ] Crear panel admin
+- [ ] Panel admin para crear, activar o desactivar cuentas
+- [ ] Busqueda de arriendos
+- [ ] Filtros por fecha, estado o tipo
+- [ ] Estadisticas
+- [ ] PWA instalable
+- [ ] Mejoras de almacenamiento y compresion de fotografias si el uso crece

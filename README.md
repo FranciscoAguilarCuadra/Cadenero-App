@@ -1,16 +1,49 @@
-# React + Vite
+# Cadenero App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicacion web para gestionar arriendos de cadenas de nieve desde telefono celular.
 
-Currently, two official plugins are available:
+La version `1.0.0` corresponde al MVP estable del proyecto: permite iniciar sesion, registrar arriendos con fotografias, separar arriendos activos/devueltos, revisar historial y mantener los datos sincronizados con Supabase.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Funcionalidades principales
 
-## React Compiler
+- Login cerrado para cadeneros autorizados.
+- Arriendos independientes por usuario.
+- Registro de arriendo o porte.
+- Fotografias del vehiculo y garantia.
+- Edicion de arriendos activos.
+- Marcado de arriendo como devuelto.
+- Reversion de devuelto a activo.
+- Historial de arriendos devueltos.
+- Eliminacion con confirmacion.
+- Diseno optimizado para uso movil.
+- Integracion con Supabase Database y Storage.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Requisitos
 
-## Expanding the ESLint configuration
+- Node.js
+- Proyecto Supabase configurado
+- Variables de entorno locales
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Variables de entorno
+
+Crear un archivo `.env` a partir de `.env.example`:
+
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+## Comandos
+
+```bash
+npm install
+npm run dev
+npm run lint
+npm run build
+```
+
+## Version
+
+Version actual: `1.0.0`
+
+Estado: MVP formalizado.

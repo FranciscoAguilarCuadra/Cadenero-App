@@ -81,7 +81,7 @@ function Dashboard({
             cerrarModal();
         } catch (error) {
             setErrorModal(
-                "No se pudo guardar el arriendo. Revisa tu conexion e intenta nuevamente."
+                "No se pudo guardar el arriendo. Revisa tu conexión e intenta nuevamente."
             );
             console.error(error);
         } finally {
@@ -109,7 +109,7 @@ function Dashboard({
         setDialogo({
             title: "Marcar como devuelto",
             message:
-                "El arriendo pasara al historial. Si fue un error, podras reactivarlo desde ahi.",
+                "El arriendo pasará al historial. Si fue un error, podrás reactivarlo desde ahí.",
             variant: "warning",
             confirmLabel: "Devolver",
             cancelLabel: "Cancelar",
@@ -123,7 +123,7 @@ function Dashboard({
                     console.error(error);
                     mostrarErrorAccion(
                         "No se pudo devolver",
-                        "No se pudo marcar el arriendo como devuelto. Revisa tu conexion e intenta nuevamente."
+                        "No se pudo marcar el arriendo como devuelto. Revisa tu conexión e intenta nuevamente."
                     );
                 } finally {
                     setProcesandoDialogo(false);
@@ -136,7 +136,7 @@ function Dashboard({
         setDialogo({
             title: "Eliminar arriendo",
             message:
-                "Esta accion no se puede deshacer y eliminara sus fotografias asociadas.",
+                "Esta acción no se puede deshacer y eliminará sus fotografías asociadas.",
             variant: "danger",
             confirmLabel: "Eliminar",
             cancelLabel: "Cancelar",
@@ -150,7 +150,7 @@ function Dashboard({
                     console.error(error);
                     mostrarErrorAccion(
                         "No se pudo eliminar",
-                        "No se pudo eliminar el arriendo. Revisa tu conexion o las politicas de Supabase."
+                        "No se pudo eliminar el arriendo. Revisa tu conexión o las políticas de Supabase."
                     );
                 } finally {
                     setProcesandoDialogo(false);

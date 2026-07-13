@@ -39,7 +39,7 @@ function Historial({
         setDialogo({
             title: "Eliminar del historial",
             message:
-                "Esta accion no se puede deshacer y eliminara las fotografias asociadas.",
+                "Esta acción no se puede deshacer y eliminará las fotografías asociadas.",
             variant: "danger",
             confirmLabel: "Eliminar",
             cancelLabel: "Cancelar",
@@ -53,7 +53,7 @@ function Historial({
                     console.error(error);
                     mostrarErrorAccion(
                         "No se pudo eliminar",
-                        "No se pudo eliminar el arriendo. Revisa tu conexion o las politicas de Supabase."
+                        "No se pudo eliminar el arriendo. Revisa tu conexión o las políticas de Supabase."
                     );
                 } finally {
                     setProcesandoDialogo(false);
@@ -66,7 +66,7 @@ function Historial({
         setDialogo({
             title: "Reactivar arriendo",
             message:
-                "El arriendo volvera a la pantalla principal como activo.",
+                "El arriendo volverá a la pantalla principal como activo.",
             variant: "warning",
             confirmLabel: "Reactivar",
             cancelLabel: "Cancelar",
@@ -80,7 +80,7 @@ function Historial({
                     console.error(error);
                     mostrarErrorAccion(
                         "No se pudo reactivar",
-                        "No se pudo reactivar el arriendo. Revisa tu conexion e intenta nuevamente."
+                        "No se pudo reactivar el arriendo. Revisa tu conexión e intenta nuevamente."
                     );
                 } finally {
                     setProcesandoDialogo(false);
@@ -108,7 +108,7 @@ function Historial({
             <section className="cards-container">
                 {prestamos.length === 0 ? (
                     <p className="empty-state">
-                        No hay arriendos devueltos todavia.
+                        No hay arriendos devueltos todavía.
                     </p>
                 ) : (
                     gruposPorFecha.map((grupo) => (

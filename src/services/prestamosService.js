@@ -88,6 +88,7 @@ function desdeSupabase(prestamo) {
         fotoVehiculo: fotosVehiculo[0] || "",
         fotosVehiculo,
         fotoGarantia: prestamo.foto_garantia || "",
+        danioPrevio: Boolean(prestamo.danio_previo),
         estado: prestamo.estado,
         usuarioId: prestamo.usuario_id,
         fechaIngreso: prestamo.fecha_ingreso,
@@ -116,6 +117,7 @@ async function haciaSupabase(prestamo) {
         foto_vehiculo: fotosVehiculo[0] || "",
         fotos_vehiculo: fotosVehiculo,
         foto_garantia: fotoGarantia,
+        danio_previo: Boolean(prestamo.danioPrevio),
         estado: prestamo.estado || "Activo",
         usuario_id: prestamo.usuarioId || null,
         fecha_ingreso: prestamo.fechaIngreso || new Date().toISOString(),
@@ -153,11 +155,25 @@ export async function guardarPrestamo(prestamo) {
     validarConfiguracion();
 
     const prestamoSupabase = await haciaSupabase(prestamo);
-    const { data, error } = await supabase
+    let { data, error } = await supabase
         .from(TABLA_PRESTAMOS)
         .upsert(prestamoSupabase)
         .select()
         .single();
+
+    if (error && error.message?.includes("danio_previo")) {
+        const prestamoSinDanioPrevio = { ...prestamoSupabase };
+        delete prestamoSinDanioPrevio.danio_previo;
+
+        const resultadoFallback = await supabase
+            .from(TABLA_PRESTAMOS)
+            .upsert(prestamoSinDanioPrevio)
+            .select()
+            .single();
+
+        data = resultadoFallback.data;
+        error = resultadoFallback.error;
+    }
 
     if (error) throw error;
 

@@ -37,6 +37,9 @@ function normalizarPrestamo(prestamo) {
     prestamoNormalizado.tipo = prestamoNormalizado.tipo || "Arriendo";
     prestamoNormalizado.fotosVehiculo = fotosVehiculo;
     prestamoNormalizado.fotoVehiculo = fotosVehiculo[0] || "";
+    prestamoNormalizado.danioPrevio = Boolean(
+        prestamoNormalizado.danioPrevio ?? prestamoNormalizado.danio_previo
+    );
     delete prestamoNormalizado[campoLegacy];
 
     return prestamoNormalizado;

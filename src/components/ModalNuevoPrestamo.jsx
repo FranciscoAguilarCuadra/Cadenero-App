@@ -1,24 +1,16 @@
-import { useState } from "react";
-import { FaCamera, FaSave, FaTimes, FaTrash } from "react-icons/fa";
+import { useEffect, useRef, useState } from "react";
+import { FaCamera, FaPlus, FaSave, FaTimes, FaTrash } from "react-icons/fa";
 
 import "../styles/ModalNuevoPrestamo.css";
 
+const MAX_FOTOS_VEHICULO = 6;
+
 function obtenerFotosVehiculo(prestamo) {
     if (Array.isArray(prestamo?.fotosVehiculo) && prestamo.fotosVehiculo.length > 0) {
-        return prestamo.fotosVehiculo.filter(Boolean);
+        return prestamo.fotosVehiculo.filter(Boolean).slice(0, MAX_FOTOS_VEHICULO);
     }
 
     return prestamo?.fotoVehiculo ? [prestamo.fotoVehiculo] : [];
-}
-
-function obtenerEspaciosFotos(cantidadFotos) {
-    if (cantidadFotos === 0 || cantidadFotos % 3 === 0) return [];
-
-    const espaciosFaltantes = 3 - (cantidadFotos % 3);
-
-    return Array.from({ length: espaciosFaltantes }, (_, indice) => ({
-        numero: cantidadFotos + indice + 1,
-    }));
 }
 
 function ModalNuevoPrestamo({
@@ -28,6 +20,7 @@ function ModalNuevoPrestamo({
     guardando,
     error,
 }) {
+    const tiraFotosRef = useRef(null);
     const [formulario, setFormulario] = useState({
         id: prestamoEditando?.id || null,
         usuarioId: prestamoEditando?.usuarioId || null,
@@ -37,14 +30,23 @@ function ModalNuevoPrestamo({
         observaciones: prestamoEditando?.observaciones || "",
         fotosVehiculo: obtenerFotosVehiculo(prestamoEditando),
         fotoGarantia: prestamoEditando?.fotoGarantia || "",
+        danioPrevio: Boolean(prestamoEditando?.danioPrevio),
         estado: prestamoEditando?.estado || "Activo",
         fechaIngreso: prestamoEditando?.fechaIngreso || new Date().toISOString(),
         fechaDevolucion: prestamoEditando?.fechaDevolucion || null,
     });
     const [errorFoto, setErrorFoto] = useState("");
-    const espaciosFotosVehiculo = obtenerEspaciosFotos(
-        formulario.fotosVehiculo.length
-    );
+    const puedeAgregarFotos =
+        formulario.fotosVehiculo.length < MAX_FOTOS_VEHICULO;
+
+    useEffect(() => {
+        if (!tiraFotosRef.current) return;
+
+        tiraFotosRef.current.scrollTo({
+            left: tiraFotosRef.current.scrollWidth,
+            behavior: "smooth",
+        });
+    }, [formulario.fotosVehiculo.length]);
 
     function manejarCambio(event) {
         const { name, value } = event.target;
@@ -52,6 +54,15 @@ function ModalNuevoPrestamo({
         setFormulario({
             ...formulario,
             [name]: value,
+        });
+    }
+
+    function manejarCheckbox(event) {
+        const { name, checked } = event.target;
+
+        setFormulario({
+            ...formulario,
+            [name]: checked,
         });
     }
 
@@ -102,20 +113,34 @@ function ModalNuevoPrestamo({
 
     async function manejarFotosVehiculo(event) {
         const archivos = Array.from(event.target.files || []);
+        const cuposDisponibles =
+            MAX_FOTOS_VEHICULO - formulario.fotosVehiculo.length;
 
         if (archivos.length === 0) return;
 
-        setErrorFoto("");
+        if (cuposDisponibles <= 0) {
+            setErrorFoto(`Puedes agregar hasta ${MAX_FOTOS_VEHICULO} fotos del vehículo.`);
+            event.target.value = "";
+            return;
+        }
+
+        const archivosPermitidos = archivos.slice(0, cuposDisponibles);
+
+        setErrorFoto(
+            archivos.length > cuposDisponibles
+                ? `Solo se agregaron ${cuposDisponibles} fotos. El máximo es ${MAX_FOTOS_VEHICULO}.`
+                : ""
+        );
 
         try {
-            const imagenesComprimidas = await comprimirArchivos(archivos);
+            const imagenesComprimidas = await comprimirArchivos(archivosPermitidos);
 
             setFormulario((prevFormulario) => ({
                 ...prevFormulario,
                 fotosVehiculo: [
                     ...prevFormulario.fotosVehiculo,
                     ...imagenesComprimidas,
-                ],
+                ].slice(0, MAX_FOTOS_VEHICULO),
             }));
         } catch {
             setErrorFoto("No se pudo cargar la imagen. Intenta con otra foto.");
@@ -203,23 +228,11 @@ function ModalNuevoPrestamo({
                 <div className="photo-section">
                     <div className="photo-section-header">
                         <span>Fotos vehículo</span>
-
-                        <label className="photo-add-button">
-                            <FaCamera />
-                            Agregar
-                            <input
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                multiple
-                                onChange={manejarFotosVehiculo}
-                                disabled={guardando}
-                            />
-                        </label>
+                        <small>{formulario.fotosVehiculo.length}/{MAX_FOTOS_VEHICULO}</small>
                     </div>
 
                     {formulario.fotosVehiculo.length > 0 ? (
-                        <div className="vehicle-photo-grid">
+                        <div className="vehicle-photo-strip" ref={tiraFotosRef}>
                             {formulario.fotosVehiculo.map((foto, indice) => (
                                 <div className="vehicle-photo-item" key={`${foto}-${indice}`}>
                                     <img
@@ -238,13 +251,10 @@ function ModalNuevoPrestamo({
                                 </div>
                             ))}
 
-                            {espaciosFotosVehiculo.map((espacio) => (
-                                <label
-                                    className="vehicle-photo-placeholder"
-                                    key={`foto-${espacio.numero}`}
-                                >
-                                    <FaCamera />
-                                    Foto {espacio.numero}
+                            {puedeAgregarFotos && (
+                                <label className="vehicle-photo-add-tile">
+                                    <FaPlus />
+                                    <span>Foto</span>
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -254,7 +264,7 @@ function ModalNuevoPrestamo({
                                         disabled={guardando}
                                     />
                                 </label>
-                            ))}
+                            )}
                         </div>
                     ) : (
                         <label className="photo-button photo-button-wide">
@@ -345,11 +355,29 @@ function ModalNuevoPrestamo({
                     </select>
                 </label>
 
+                <label className="damage-toggle-field">
+                    <input
+                        type="checkbox"
+                        name="danioPrevio"
+                        checked={formulario.danioPrevio}
+                        onChange={manejarCheckbox}
+                        disabled={guardando}
+                    />
+                    <span>
+                        <strong>Daño previo</strong>
+                        <small>Marca si el vehículo ya presentaba un defecto.</small>
+                    </span>
+                </label>
+
                 <label className="form-group">
                     Observaciones
                     <textarea
                         name="observaciones"
-                        placeholder="Opcional"
+                        placeholder={
+                            formulario.danioPrevio
+                                ? "Describe brevemente el daño previo"
+                                : "Opcional"
+                        }
                         value={formulario.observaciones}
                         onChange={manejarCambio}
                         disabled={guardando}

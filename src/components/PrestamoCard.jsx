@@ -153,9 +153,15 @@ function PrestamoCard({
                     </div>
 
                     <div className="prestamo-meta-actions">
-                        <span className={estaDevuelto ? "status returned" : "status active"}>
-                            {estaDevuelto ? "Devuelto" : "Activo"}
-                        </span>
+                        <div className="prestamo-badges">
+                            <span className={estaDevuelto ? "status returned" : "status active"}>
+                                {estaDevuelto ? "Devuelto" : "Activo"}
+                            </span>
+
+                            {prestamo.danioPrevio && (
+                                <span className="status damage">Daño previo</span>
+                            )}
+                        </div>
 
                         {onEliminar && (
                             <button

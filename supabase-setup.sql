@@ -103,6 +103,7 @@ create table if not exists public.prestamos (
     foto_vehiculo text default '',
     fotos_vehiculo text[] not null default '{}',
     foto_garantia text default '',
+    danio_previo boolean not null default false,
     estado text not null default 'Activo',
     usuario_id uuid references public.profiles(id),
     fecha_ingreso timestamptz not null default now(),
@@ -113,6 +114,7 @@ create table if not exists public.prestamos (
 alter table public.prestamos add column if not exists usuario_id uuid references public.profiles(id);
 alter table public.prestamos add column if not exists fotos_vehiculo text[] not null default '{}';
 alter table public.prestamos add column if not exists tipo text not null default 'Arriendo';
+alter table public.prestamos add column if not exists danio_previo boolean not null default false;
 alter table public.prestamos drop constraint if exists prestamos_tipo_check;
 alter table public.prestamos add constraint prestamos_tipo_check check (tipo in ('Arriendo', 'Porte'));
 alter table public.prestamos enable row level security;

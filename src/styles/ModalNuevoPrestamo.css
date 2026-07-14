@@ -79,17 +79,10 @@
     font-weight: bold;
 }
 
-.photo-add-button {
-    min-height: 40px;
-    padding: 0 12px;
-    border-radius: 10px;
-    background: #eef2ff;
-    color: var(--color-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
+.photo-section-header small {
+    color: var(--color-text-secondary);
     font-size: 14px;
+    font-weight: bold;
 }
 
 .photo-button {
@@ -145,18 +138,24 @@
     color: white;
 }
 
-.vehicle-photo-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.vehicle-photo-strip {
+    display: flex;
     gap: 10px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    padding-bottom: 4px;
 }
 
-.vehicle-photo-item {
+.vehicle-photo-item,
+.vehicle-photo-add-tile {
+    flex: 0 0 calc((100% - 20px) / 3);
     position: relative;
     aspect-ratio: 1;
     border-radius: 12px;
     overflow: hidden;
     background: #eef2ff;
+    scroll-snap-align: end;
 }
 
 .vehicle-photo-item img {
@@ -176,11 +175,8 @@
     color: white;
 }
 
-.vehicle-photo-placeholder {
-    aspect-ratio: 1;
+.vehicle-photo-add-tile {
     border: 1px dashed #bfdbfe;
-    border-radius: 12px;
-    background: #eef2ff;
     color: var(--color-primary);
     font-size: 13px;
     font-weight: bold;
@@ -192,8 +188,46 @@
     gap: 7px;
 }
 
-.vehicle-photo-placeholder input {
+.vehicle-photo-add-tile input {
     display: none;
+}
+
+.damage-toggle-field {
+    width: 100%;
+    border: 1px solid #fcd34d;
+    border-radius: 12px;
+    background: #fffbeb;
+    padding: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.damage-toggle-field input {
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    accent-color: var(--color-warning);
+    flex: 0 0 auto;
+}
+
+.damage-toggle-field span {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.damage-toggle-field strong {
+    color: #92400e;
+    font-size: 14px;
+    line-height: 1.15;
+}
+
+.damage-toggle-field small {
+    color: #a16207;
+    font-size: 13px;
+    line-height: 1.25;
 }
 
 .form-group {
@@ -237,9 +271,9 @@
 
 .close-button:disabled,
 .save-button:disabled,
-.photo-add-button:has(input:disabled),
 .vehicle-photo-item button:disabled,
-.vehicle-photo-placeholder:has(input:disabled),
+.vehicle-photo-add-tile:has(input:disabled),
+.damage-toggle-field:has(input:disabled),
 .warranty-photo-preview button:disabled,
 .form-group select:disabled,
 .form-group textarea:disabled {

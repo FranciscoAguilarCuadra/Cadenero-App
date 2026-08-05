@@ -129,7 +129,7 @@
 
 .status {
     flex: 0 0 auto;
-    min-height: 34px;
+    min-height: 38px;
     min-width: 76px;
     padding: 8px 9px;
     border-radius: 10px;
@@ -336,6 +336,7 @@
     }
 
     .status {
+        min-height: 36px;
         min-width: 70px;
         font-size: 12px;
         padding-inline: 8px;

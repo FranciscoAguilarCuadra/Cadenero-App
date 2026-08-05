@@ -40,6 +40,14 @@ function normalizarInicioDia(fecha) {
 
 function obtenerProgresoDias(prestamo) {
     const diasTotales = Math.max(Number(prestamo.dias) || 1, 1);
+
+    if (prestamo.estado === "Devuelto") {
+        return {
+            texto: `${diasTotales} dÃ­a${diasTotales > 1 ? "s" : ""}`,
+            clase: "neutral",
+        };
+    }
+
     const fechaIngreso = normalizarInicioDia(prestamo.fechaIngreso);
     const hoy = normalizarInicioDia(new Date());
 

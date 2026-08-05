@@ -87,7 +87,6 @@ function desdeSupabase(prestamo) {
         observaciones: prestamo.observaciones || "",
         fotoVehiculo: fotosVehiculo[0] || "",
         fotosVehiculo,
-        fotoGarantia: prestamo.foto_garantia || "",
         danioPrevio: Boolean(prestamo.danio_previo),
         estado: prestamo.estado,
         usuarioId: prestamo.usuario_id,
@@ -102,11 +101,6 @@ async function haciaSupabase(prestamo) {
         id,
         normalizarFotosVehiculo(prestamo)
     );
-    const fotoGarantia = await subirFotoSiCorresponde(
-        id,
-        "garantia",
-        prestamo.fotoGarantia
-    );
 
     return {
         id,
@@ -116,7 +110,6 @@ async function haciaSupabase(prestamo) {
         observaciones: prestamo.observaciones || "",
         foto_vehiculo: fotosVehiculo[0] || "",
         fotos_vehiculo: fotosVehiculo,
-        foto_garantia: fotoGarantia,
         danio_previo: Boolean(prestamo.danioPrevio),
         estado: prestamo.estado || "Activo",
         usuario_id: prestamo.usuarioId || null,
@@ -223,7 +216,6 @@ export async function eliminarPrestamo(prestamo) {
 
     const rutasFotos = [
         ...normalizarFotosVehiculo(prestamo).map(obtenerRutaFotoDesdeUrl),
-        obtenerRutaFotoDesdeUrl(prestamo.fotoGarantia),
     ].filter(Boolean);
     const rutasUnicas = [...new Set(rutasFotos)];
 

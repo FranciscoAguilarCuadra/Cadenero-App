@@ -102,7 +102,6 @@ create table if not exists public.prestamos (
     observaciones text default '',
     foto_vehiculo text default '',
     fotos_vehiculo text[] not null default '{}',
-    foto_garantia text default '',
     danio_previo boolean not null default false,
     estado text not null default 'Activo',
     usuario_id uuid references public.profiles(id),

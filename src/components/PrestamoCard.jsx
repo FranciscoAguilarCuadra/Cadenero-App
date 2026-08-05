@@ -23,10 +23,6 @@ function obtenerFotos(prestamo) {
         : [];
     const fotos = fotosVehiculo.length > 0 ? fotosVehiculo : [prestamo.fotoVehiculo];
 
-    if (prestamo.fotoGarantia) {
-        fotos.push(prestamo.fotoGarantia);
-    }
-
     return fotos.filter(Boolean);
 }
 

@@ -29,7 +29,6 @@ function ModalNuevoPrestamo({
         pago: prestamoEditando?.pago || "Efectivo",
         observaciones: prestamoEditando?.observaciones || "",
         fotosVehiculo: obtenerFotosVehiculo(prestamoEditando),
-        fotoGarantia: prestamoEditando?.fotoGarantia || "",
         danioPrevio: Boolean(prestamoEditando?.danioPrevio),
         estado: prestamoEditando?.estado || "Activo",
         fechaIngreso: prestamoEditando?.fechaIngreso || new Date().toISOString(),
@@ -149,40 +148,12 @@ function ModalNuevoPrestamo({
         }
     }
 
-    async function manejarFotoGarantia(event) {
-        const archivo = event.target.files[0];
-
-        if (!archivo) return;
-
-        setErrorFoto("");
-
-        try {
-            const imagenComprimida = await comprimirImagen(archivo);
-
-            setFormulario((prevFormulario) => ({
-                ...prevFormulario,
-                fotoGarantia: imagenComprimida,
-            }));
-        } catch {
-            setErrorFoto("No se pudo cargar la imagen. Intenta con otra foto.");
-        } finally {
-            event.target.value = "";
-        }
-    }
-
     function eliminarFotoVehiculo(indiceFoto) {
         setFormulario((prevFormulario) => ({
             ...prevFormulario,
             fotosVehiculo: prevFormulario.fotosVehiculo.filter(
                 (_, indice) => indice !== indiceFoto
             ),
-        }));
-    }
-
-    function eliminarFotoGarantia() {
-        setFormulario((prevFormulario) => ({
-            ...prevFormulario,
-            fotoGarantia: "",
         }));
     }
 
@@ -276,36 +247,6 @@ function ModalNuevoPrestamo({
                                 capture="environment"
                                 multiple
                                 onChange={manejarFotosVehiculo}
-                                disabled={guardando}
-                            />
-                        </label>
-                    )}
-                </div>
-
-                <div className="warranty-photo-field">
-                    {formulario.fotoGarantia ? (
-                        <div className="warranty-photo-preview">
-                            <img src={formulario.fotoGarantia} alt="Garantía" />
-
-                            <button
-                                type="button"
-                                onClick={eliminarFotoGarantia}
-                                aria-label="Eliminar foto de garantía"
-                                disabled={guardando}
-                            >
-                                <FaTrash />
-                            </button>
-                        </div>
-                    ) : (
-                        <label className="photo-button warranty-photo">
-                            <FaCamera />
-                            Foto garantía
-
-                            <input
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                onChange={manejarFotoGarantia}
                                 disabled={guardando}
                             />
                         </label>

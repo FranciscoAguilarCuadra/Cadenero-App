@@ -279,6 +279,7 @@ function ModalNuevoPrestamo({
                         <option value="3">3 días</option>
                         <option value="4">4 días</option>
                         <option value="5">5 días</option>
+                        <option value="6">6 días</option>
                         <option value="7">7 días</option>
                     </select>
                 </label>

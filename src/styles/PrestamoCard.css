@@ -178,6 +178,40 @@
     line-height: 1.2;
 }
 
+.prestamo-details .day-progress {
+    font-weight: bold;
+}
+
+.day-progress.early {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.day-progress.middle {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.day-progress.advanced {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.day-progress.due-today {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.day-progress.overdue {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.day-progress.neutral {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
 .prestamo-buttons {
     grid-area: buttons;
     display: grid;

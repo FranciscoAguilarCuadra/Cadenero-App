@@ -16,6 +16,7 @@ import { formatearHora } from "../utils/fechas";
 import "../styles/PrestamoCard.css";
 
 const zonaInferiorNoAccionable = 150;
+const milisegundosPorDia = 24 * 60 * 60 * 1000;
 
 function obtenerFotos(prestamo) {
     const fotosVehiculo = Array.isArray(prestamo.fotosVehiculo)
@@ -24,6 +25,78 @@ function obtenerFotos(prestamo) {
     const fotos = fotosVehiculo.length > 0 ? fotosVehiculo : [prestamo.fotoVehiculo];
 
     return fotos.filter(Boolean);
+}
+
+function normalizarInicioDia(fecha) {
+    const fechaNormalizada = fecha ? new Date(fecha) : null;
+
+    if (!fechaNormalizada || Number.isNaN(fechaNormalizada.getTime())) {
+        return null;
+    }
+
+    fechaNormalizada.setHours(0, 0, 0, 0);
+    return fechaNormalizada;
+}
+
+function obtenerProgresoDias(prestamo) {
+    const diasTotales = Math.max(Number(prestamo.dias) || 1, 1);
+    const fechaIngreso = normalizarInicioDia(prestamo.fechaIngreso);
+    const hoy = normalizarInicioDia(new Date());
+
+    if (!fechaIngreso || !hoy) {
+        return {
+            texto: `${diasTotales} día${diasTotales > 1 ? "s" : ""}`,
+            clase: "neutral",
+        };
+    }
+
+    const diasTranscurridos =
+        Math.floor((hoy.getTime() - fechaIngreso.getTime()) / milisegundosPorDia) +
+        1;
+    const diaActual = Math.min(Math.max(diasTranscurridos, 1), diasTotales);
+    const estaAtrasado = diasTranscurridos > diasTotales;
+    const venceHoy = diasTranscurridos === diasTotales;
+    const progreso = diaActual / diasTotales;
+
+    if (estaAtrasado) {
+        return {
+            texto: "Atrasado",
+            clase: "overdue",
+        };
+    }
+
+    if (diasTotales === 1) {
+        return {
+            texto: "Hoy",
+            clase: "due-today",
+        };
+    }
+
+    if (venceHoy) {
+        return {
+            texto: `${diaActual}/${diasTotales} días`,
+            clase: "due-today",
+        };
+    }
+
+    if (progreso >= 0.75) {
+        return {
+            texto: `${diaActual}/${diasTotales} días`,
+            clase: "advanced",
+        };
+    }
+
+    if (progreso >= 0.45) {
+        return {
+            texto: `${diaActual}/${diasTotales} días`,
+            clase: "middle",
+        };
+    }
+
+    return {
+        texto: `${diaActual}/${diasTotales} días`,
+        clase: "early",
+    };
 }
 
 function PrestamoCard({
@@ -43,6 +116,7 @@ function PrestamoCard({
     const horaIngreso = formatearHora(prestamo.fechaIngreso);
     const tipo = prestamo.tipo || "Arriendo";
     const estaParcial = !estaCompletaEnPantalla && indiceGaleria === null;
+    const progresoDias = obtenerProgresoDias(prestamo);
 
     useEffect(() => {
         let frameId = null;
@@ -178,9 +252,9 @@ function PrestamoCard({
                         {prestamo.pago}
                     </p>
 
-                    <p>
+                    <p className={`day-progress ${progresoDias.clase}`}>
                         <FaCalendarAlt />
-                        {prestamo.dias} día{prestamo.dias > 1 ? "s" : ""}
+                        {progresoDias.texto}
                     </p>
                 </div>
             </div>

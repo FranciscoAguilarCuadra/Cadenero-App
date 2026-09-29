@@ -50,19 +50,19 @@ function ModalNuevoPrestamo({
     function manejarCambio(event) {
         const { name, value } = event.target;
 
-        setFormulario({
-            ...formulario,
+        setFormulario((prev) => ({
+            ...prev,
             [name]: value,
-        });
+        }));
     }
 
     function manejarCheckbox(event) {
         const { name, checked } = event.target;
 
-        setFormulario({
-            ...formulario,
+        setFormulario((prev) => ({
+            ...prev,
             [name]: checked,
-        });
+        }));
     }
 
     function comprimirImagen(archivo) {
@@ -205,7 +205,7 @@ function ModalNuevoPrestamo({
                     {formulario.fotosVehiculo.length > 0 ? (
                         <div className="vehicle-photo-strip" ref={tiraFotosRef}>
                             {formulario.fotosVehiculo.map((foto, indice) => (
-                                <div className="vehicle-photo-item" key={`${foto}-${indice}`}>
+                                <div className="vehicle-photo-item" key={`foto-${indice}`}>
                                     <img
                                         src={foto}
                                         alt={`Vehículo ${indice + 1}`}

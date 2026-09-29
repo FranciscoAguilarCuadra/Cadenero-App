@@ -3,9 +3,11 @@ import { isSupabaseConfigured, supabase } from "../supabase";
 const BUCKET_PRESTAMOS = "prestamos";
 const TABLA_PRESTAMOS = "prestamos";
 
+const dataUrlMimeRegex = /data:(.*);base64/;
+
 function dataUrlToBlob(dataUrl) {
     const [metadata, base64] = dataUrl.split(",");
-    const mime = metadata.match(/data:(.*);base64/)?.[1] || "image/jpeg";
+    const mime = metadata.match(dataUrlMimeRegex)?.[1] || "image/jpeg";
     const bytes = atob(base64);
     const buffer = new Uint8Array(bytes.length);
 

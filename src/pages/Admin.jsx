@@ -44,8 +44,15 @@ function Admin({ usuarioActual, onLogout, onUsuarioActualizado }) {
     });
 
     const usuariosOrdenados = useMemo(() => ordenarUsuarios(usuarios), [usuarios]);
-    const totalActivos = usuarios.filter((usuario) => usuario.activo).length;
-    const totalAdmins = usuarios.filter((usuario) => usuario.rol === "admin").length;
+    const { totalActivos, totalAdmins } = useMemo(() => {
+        let activos = 0;
+        let admins = 0;
+        for (const u of usuarios) {
+            if (u.activo) activos++;
+            if (u.rol === "admin") admins++;
+        }
+        return { totalActivos: activos, totalAdmins: admins };
+    }, [usuarios]);
 
     const cargarUsuarios = useCallback(async function cargarUsuarios() {
         setCargando(true);

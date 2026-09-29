@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
-import Admin from "./pages/Admin";
 import Dashboard from "./pages/Dashboard";
 import Historial from "./pages/Historial";
 import Login from "./pages/Login";
 import prestamosIniciales from "./data/prestamos";
 import { isSupabaseConfigured } from "./supabase";
+
+const Admin = lazy(() => import("./pages/Admin"));
 import {
     cerrarSesion,
     escucharCambiosSesion,
@@ -126,7 +127,8 @@ function App() {
             }
         }
 
-        const dejarDeEscuchar = escucharCambiosSesion((nuevaSesion) => {
+        const dejarDeEscuchar = escucharCambiosSesion((nuevaSesion, event) => {
+            if (event === "TOKEN_REFRESHED") return;
             aplicarSesion(nuevaSesion);
         });
 
@@ -331,11 +333,13 @@ function App() {
                 path="/admin"
                 element={
                     perfil?.rol === "admin" ? (
-                        <Admin
-                            usuarioActual={perfil}
-                            onLogout={manejarLogout}
-                            onUsuarioActualizado={setPerfil}
-                        />
+                        <Suspense fallback={<main className="app-loading">Cargando...</main>}>
+                            <Admin
+                                usuarioActual={perfil}
+                                onLogout={manejarLogout}
+                                onUsuarioActualizado={setPerfil}
+                            />
+                        </Suspense>
                     ) : (
                         <Navigate to="/" replace />
                     )

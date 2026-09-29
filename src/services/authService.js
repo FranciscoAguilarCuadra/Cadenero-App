@@ -19,8 +19,8 @@ export async function obtenerSesionActual() {
 export function escucharCambiosSesion(callback) {
     validarConfiguracion();
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-        callback(session);
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        callback(session, event);
     });
 
     return () => data.subscription.unsubscribe();

@@ -11,6 +11,8 @@
         "buttons buttons";
     gap: 10px 12px;
     min-width: 0;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 200px;
     transition:
         opacity 0.18s ease,
         filter 0.18s ease,

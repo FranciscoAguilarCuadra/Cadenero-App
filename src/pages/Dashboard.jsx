@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import "./../styles/Dashboard.css";
 
@@ -40,9 +40,9 @@ function Dashboard({
     const [errorModal, setErrorModal] = useState("");
     const [dialogo, setDialogo] = useState(null);
     const [procesandoDialogo, setProcesandoDialogo] = useState(false);
-    const gruposPorFecha = agruparPorFecha(prestamos);
+    const gruposPorFecha = useMemo(() => agruparPorFecha(prestamos), [prestamos]);
     const nombreUsuario = usuario?.nombre || usuario?.email || "usuario";
-    const prestamosDeHoy = prestamos.filter(esDeHoy).length;
+    const prestamosDeHoy = useMemo(() => prestamos.filter(esDeHoy).length, [prestamos]);
 
     function limpiarMensajes() {
         setErrorModal("");

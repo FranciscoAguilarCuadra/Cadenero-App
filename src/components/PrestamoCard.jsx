@@ -15,7 +15,6 @@ import {
 import { formatearHora } from "../utils/fechas";
 import "../styles/PrestamoCard.css";
 
-const zonaInferiorNoAccionable = 150;
 const milisegundosPorDia = 24 * 60 * 60 * 1000;
 
 function obtenerFotos(prestamo) {
@@ -43,7 +42,7 @@ function obtenerProgresoDias(prestamo) {
 
     if (prestamo.estado === "Devuelto") {
         return {
-            texto: `${diasTotales} dÃ­a${diasTotales > 1 ? "s" : ""}`,
+            texto: `${diasTotales} día${diasTotales > 1 ? "s" : ""}`,
             clase: "neutral",
         };
     }
@@ -116,72 +115,33 @@ function PrestamoCard({
 }) {
     const cardRef = useRef(null);
     const [indiceGaleria, setIndiceGaleria] = useState(null);
-    const [estaCompletaEnPantalla, setEstaCompletaEnPantalla] = useState(true);
     const fotos = obtenerFotos(prestamo);
     const fotoPrincipal = fotos[0];
     const tieneFotos = fotos.length > 0;
     const estaDevuelto = prestamo.estado === "Devuelto";
     const horaIngreso = formatearHora(prestamo.fechaIngreso);
     const tipo = prestamo.tipo || "Arriendo";
-    const estaParcial = !estaCompletaEnPantalla && indiceGaleria === null;
     const progresoDias = obtenerProgresoDias(prestamo);
 
     useEffect(() => {
-        let frameId = null;
-        let observer = null;
-        let timeoutId = null;
+        const nodo = cardRef.current;
+        if (!nodo) return;
 
-        function medirVisibilidad() {
-            if (!cardRef.current) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    nodo.classList.remove("is-partial");
+                } else {
+                    nodo.classList.add("is-partial");
+                }
+            },
+            { rootMargin: "0px 0px -150px 0px" }
+        );
 
-            const rect = cardRef.current.getBoundingClientRect();
-            const limiteInferior = window.innerHeight - zonaInferiorNoAccionable;
-            const completa =
-                rect.top >= 0 &&
-                rect.bottom <= limiteInferior &&
-                rect.height <= limiteInferior;
+        observer.observe(nodo);
 
-            setEstaCompletaEnPantalla(completa);
-        }
-
-        function solicitarMedicion() {
-            if (frameId) return;
-
-            frameId = window.requestAnimationFrame(() => {
-                frameId = null;
-                medirVisibilidad();
-            });
-        }
-
-        medirVisibilidad();
-        timeoutId = window.setTimeout(solicitarMedicion, 120);
-
-        if ("ResizeObserver" in window && cardRef.current) {
-            observer = new ResizeObserver(solicitarMedicion);
-            observer.observe(cardRef.current);
-            observer.observe(document.body);
-        }
-
-        window.addEventListener("scroll", solicitarMedicion, { passive: true });
-        window.addEventListener("resize", solicitarMedicion);
-
-        return () => {
-            if (frameId) {
-                window.cancelAnimationFrame(frameId);
-            }
-
-            if (timeoutId) {
-                window.clearTimeout(timeoutId);
-            }
-
-            if (observer) {
-                observer.disconnect();
-            }
-
-            window.removeEventListener("scroll", solicitarMedicion);
-            window.removeEventListener("resize", solicitarMedicion);
-        };
-    }, [prestamo.id, prestamo.estado]);
+        return () => observer.disconnect();
+    }, []);
 
     function mostrarFotoAnterior() {
         setIndiceGaleria((indiceActual) =>
@@ -198,8 +158,7 @@ function PrestamoCard({
     return (
         <article
             ref={cardRef}
-            className={`prestamo-card${estaParcial ? " is-partial" : ""}`}
-            aria-disabled={estaParcial}
+            className="prestamo-card"
         >
             <div className="vehicle-image">
                 {tieneFotos ? (
@@ -209,7 +168,7 @@ function PrestamoCard({
                         onClick={() => setIndiceGaleria(0)}
                         aria-label="Ver fotos del arriendo"
                     >
-                        <img src={fotoPrincipal} alt="Vehículo registrado" />
+                        <img src={fotoPrincipal} alt="Vehículo registrado" loading="lazy" decoding="async" />
 
                         {fotos.length > 1 && (
                             <span className="photo-count">{fotos.length}</span>

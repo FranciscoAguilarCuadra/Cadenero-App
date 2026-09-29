@@ -4,8 +4,12 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Historial from "./pages/Historial";
 import Login from "./pages/Login";
+import OfflineBanner from "./components/OfflineBanner";
 import prestamosIniciales from "./data/prestamos";
 import { isSupabaseConfigured } from "./supabase";
+import { isOnline, onConnectivityChange } from "./services/connectivity";
+import { sincronizarCola } from "./services/syncService";
+import { guardarMeta, obtenerMeta } from "./services/localCache";
 
 const Admin = lazy(() => import("./pages/Admin"));
 import {
@@ -53,6 +57,22 @@ function obtenerPrestamosLocales() {
     return prestamosCargados.map(normalizarPrestamo);
 }
 
+async function cargarPerfilCacheado() {
+    try {
+        return await obtenerMeta("perfil");
+    } catch {
+        return null;
+    }
+}
+
+async function guardarPerfilCacheado(perfil) {
+    try {
+        await guardarMeta("perfil", perfil);
+    } catch {
+        // Ignorar errores de caché
+    }
+}
+
 function App() {
     const [prestamos, setPrestamos] = useState(() =>
         isSupabaseConfigured ? [] : obtenerPrestamosLocales()
@@ -72,9 +92,15 @@ function App() {
                 const prestamosRemotos = await obtenerPrestamos(perfilUsuario);
                 setPrestamos(prestamosRemotos.map(normalizarPrestamo));
             } catch (error) {
-                setErrorCargaPrestamos(
-                    "No se pudieron cargar los arriendos. Revisa tu conexión e intenta nuevamente."
-                );
+                if (navigator.onLine) {
+                    setErrorCargaPrestamos(
+                        "No se pudieron cargar los arriendos. Revisa tu conexión e intenta nuevamente."
+                    );
+                } else {
+                    setErrorCargaPrestamos(
+                        "Sin conexión. Se muestran los datos guardados localmente."
+                    );
+                }
                 console.error(error);
             } finally {
                 setCargandoPrestamos(false);
@@ -103,8 +129,18 @@ function App() {
                 }
 
                 setPerfil(perfilUsuario);
+                await guardarPerfilCacheado(perfilUsuario);
                 await cargarPrestamosRemotos(perfilUsuario);
             } catch (error) {
+                // Si falla la red, intentar con perfil cacheado
+                if (!navigator.onLine) {
+                    const perfilCacheado = await cargarPerfilCacheado();
+                    if (perfilCacheado) {
+                        setPerfil(perfilCacheado);
+                        await cargarPrestamosRemotos(perfilCacheado);
+                        return;
+                    }
+                }
                 setPerfil(null);
                 setPrestamos([]);
                 console.error(error);
@@ -113,6 +149,7 @@ function App() {
         [cargarPrestamosRemotos]
     );
 
+    // ─── Cargar sesión inicial ─────────────────────
     useEffect(() => {
         if (!isSupabaseConfigured) return;
 
@@ -121,6 +158,14 @@ function App() {
                 const sesionActual = await obtenerSesionActual();
                 await aplicarSesion(sesionActual);
             } catch (error) {
+                // Si falla la red, intentar con sesión/perfil cacheado
+                if (!navigator.onLine) {
+                    const perfilCacheado = await cargarPerfilCacheado();
+                    if (perfilCacheado) {
+                        setPerfil(perfilCacheado);
+                        await cargarPrestamosRemotos(perfilCacheado);
+                    }
+                }
                 console.error(error);
             } finally {
                 setCargandoAuth(false);
@@ -135,8 +180,30 @@ function App() {
         cargarSesionInicial();
 
         return dejarDeEscuchar;
-    }, [aplicarSesion]);
+    }, [aplicarSesion, cargarPrestamosRemotos]);
 
+    // ─── Sincronizar al reconectar ─────────────────
+    useEffect(() => {
+        if (!isSupabaseConfigured) return;
+
+        const unsubscribe = onConnectivityChange(async (online) => {
+            if (online) {
+                try {
+                    await sincronizarCola();
+                    // Refrescar datos desde servidor después de sync
+                    if (perfil) {
+                        await cargarPrestamosRemotos(perfil);
+                    }
+                } catch (error) {
+                    console.error("Error durante sincronización:", error);
+                }
+            }
+        });
+
+        return unsubscribe;
+    }, [perfil, cargarPrestamosRemotos]);
+
+    // ─── Guardar en localStorage (modo sin Supabase) ─
     useEffect(() => {
         if (isSupabaseConfigured) return;
 
@@ -157,6 +224,7 @@ function App() {
 
         setSesion(nuevaSesion);
         setPerfil(perfilUsuario);
+        await guardarPerfilCacheado(perfilUsuario);
         await cargarPrestamosRemotos(perfilUsuario);
     }
 
@@ -297,57 +365,60 @@ function App() {
     }
 
     return (
-        <Routes>
-            <Route
-                path="/"
-                element={
-                    <Dashboard
-                        prestamos={prestamosActivos}
-                        cargandoPrestamos={cargandoPrestamos}
-                        mensajeExterno={errorCargaPrestamos}
-                        usuario={perfil}
-                        onAgregarPrestamo={agregarPrestamo}
-                        onEditarPrestamo={editarPrestamo}
-                        onDevolverPrestamo={devolverPrestamo}
-                        onEliminarPrestamo={eliminarPrestamo}
-                        onLogout={manejarLogout}
-                    />
-                }
-            />
+        <>
+            {isSupabaseConfigured && <OfflineBanner />}
+            <Routes>
+                <Route
+                    path="/"
+                    element={
+                        <Dashboard
+                            prestamos={prestamosActivos}
+                            cargandoPrestamos={cargandoPrestamos}
+                            mensajeExterno={errorCargaPrestamos}
+                            usuario={perfil}
+                            onAgregarPrestamo={agregarPrestamo}
+                            onEditarPrestamo={editarPrestamo}
+                            onDevolverPrestamo={devolverPrestamo}
+                            onEliminarPrestamo={eliminarPrestamo}
+                            onLogout={manejarLogout}
+                        />
+                    }
+                />
 
-            <Route
-                path="/historial"
-                element={
-                    <Historial
-                        prestamos={prestamosDevueltos}
-                        mensajeExterno={errorCargaPrestamos}
-                        usuario={perfil}
-                        onEliminarPrestamo={eliminarPrestamo}
-                        onReactivarPrestamo={reactivarPrestamo}
-                        onLogout={manejarLogout}
-                    />
-                }
-            />
+                <Route
+                    path="/historial"
+                    element={
+                        <Historial
+                            prestamos={prestamosDevueltos}
+                            mensajeExterno={errorCargaPrestamos}
+                            usuario={perfil}
+                            onEliminarPrestamo={eliminarPrestamo}
+                            onReactivarPrestamo={reactivarPrestamo}
+                            onLogout={manejarLogout}
+                        />
+                    }
+                />
 
-            <Route
-                path="/admin"
-                element={
-                    perfil?.rol === "admin" ? (
-                        <Suspense fallback={<main className="app-loading">Cargando...</main>}>
-                            <Admin
-                                usuarioActual={perfil}
-                                onLogout={manejarLogout}
-                                onUsuarioActualizado={setPerfil}
-                            />
-                        </Suspense>
-                    ) : (
-                        <Navigate to="/" replace />
-                    )
-                }
-            />
+                <Route
+                    path="/admin"
+                    element={
+                        perfil?.rol === "admin" ? (
+                            <Suspense fallback={<main className="app-loading">Cargando...</main>}>
+                                <Admin
+                                    usuarioActual={perfil}
+                                    onLogout={manejarLogout}
+                                    onUsuarioActualizado={setPerfil}
+                                />
+                            </Suspense>
+                        ) : (
+                            <Navigate to="/" replace />
+                        )
+                    }
+                />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </>
     );
 }
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaWifi } from "react-icons/fa";
 
+import { isOnline } from "../services/connectivity";
 import "../styles/Login.css";
 
 function Login({ onLogin }) {
@@ -10,6 +11,8 @@ function Login({ onLogin }) {
     const [cargando, setCargando] = useState(false);
     const [mostrarPassword, setMostrarPassword] = useState(false);
 
+    const online = isOnline();
+
     async function manejarSubmit(event) {
         event.preventDefault();
         setError("");
@@ -18,9 +21,13 @@ function Login({ onLogin }) {
         try {
             await onLogin(email.trim(), password);
         } catch (loginError) {
-            setError(
-                loginError.message || "No se pudo iniciar sesión. Revisa tus datos."
-            );
+            if (!navigator.onLine) {
+                setError("Sin conexión a internet. Conéctate para iniciar sesión.");
+            } else {
+                setError(
+                    loginError.message || "No se pudo iniciar sesión. Revisa tus datos."
+                );
+            }
         } finally {
             setCargando(false);
         }
@@ -34,6 +41,13 @@ function Login({ onLogin }) {
                     <p>Ingreso exclusivo para cadeneros autorizados.</p>
                 </div>
 
+                {!online && (
+                    <div className="login-offline-notice">
+                        <FaWifi />
+                        <span>Sin conexión — necesitas internet para iniciar sesión</span>
+                    </div>
+                )}
+
                 <label className="login-field">
                     Correo
                     <input
@@ -42,6 +56,7 @@ function Login({ onLogin }) {
                         onChange={(event) => setEmail(event.target.value)}
                         autoComplete="email"
                         required
+                        disabled={!online}
                     />
                 </label>
 
@@ -54,12 +69,14 @@ function Login({ onLogin }) {
                             onChange={(event) => setPassword(event.target.value)}
                             autoComplete="current-password"
                             required
+                            disabled={!online}
                         />
 
                         <button
                             type="button"
                             className="password-toggle"
                             onClick={() => setMostrarPassword((actual) => !actual)}
+                            disabled={!online}
                             aria-label={
                                 mostrarPassword
                                     ? "Ocultar contraseña"
@@ -73,8 +90,8 @@ function Login({ onLogin }) {
 
                 {error && <p className="login-error">{error}</p>}
 
-                <button type="submit" className="login-button" disabled={cargando}>
-                    {cargando ? "Ingresando..." : "Ingresar"}
+                <button type="submit" className="login-button" disabled={cargando || !online}>
+                    {cargando ? "Ingresando..." : online ? "Ingresar" : "Sin conexión"}
                 </button>
             </form>
         </main>

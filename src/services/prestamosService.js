@@ -1,4 +1,18 @@
 import { isSupabaseConfigured, supabase } from "../supabase";
+import {
+    cargarPrestamosLocal,
+    guardarPrestamosLocal,
+    agregarPrestamoLocal,
+    actualizarPrestamoLocal,
+    eliminarPrestamoLocal,
+} from "./localCache";
+import {
+    crearPrestamoOffline,
+    editarPrestamoOffline,
+    devolverPrestamoOffline,
+    reactivarPrestamoOffline,
+    eliminarPrestamoOffline,
+} from "./offlineQueue";
 
 const BUCKET_PRESTAMOS = "prestamos";
 const TABLA_PRESTAMOS = "prestamos";
@@ -25,12 +39,22 @@ function crearNombreFoto(prestamoId, campo) {
 function obtenerRutaFotoDesdeUrl(url) {
     if (!url) return null;
 
-    const marcador = `/storage/v1/object/public/${BUCKET_PRESTAMOS}/`;
-    const posicion = url.indexOf(marcador);
+    // Soporta URLs públicas y firmadas
+    const marcadorPublico = `/storage/v1/object/public/${BUCKET_PRESTAMOS}/`;
+    const marcadorPrivado = `/storage/v1/object/sign/${BUCKET_PRESTAMOS}/`;
 
-    if (posicion === -1) return null;
+    let posicion = url.indexOf(marcadorPublico);
+    if (posicion !== -1) {
+        return decodeURIComponent(url.slice(posicion + marcadorPublico.length));
+    }
 
-    return decodeURIComponent(url.slice(posicion + marcador.length));
+    posicion = url.indexOf(marcadorPrivado);
+    if (posicion !== -1) {
+        const rutaConToken = url.slice(posicion + marcadorPrivado.length);
+        return decodeURIComponent(rutaConToken.split("?")[0]);
+    }
+
+    return null;
 }
 
 function normalizarFotosVehiculo(prestamo) {
@@ -63,9 +87,20 @@ async function subirFotoSiCorresponde(prestamoId, campo, valor) {
 
     if (error) throw error;
 
-    const { data } = supabase.storage.from(BUCKET_PRESTAMOS).getPublicUrl(ruta);
+    // Usar URL firmada (bucket privado) en vez de URL pública
+    const { data, error: signError } = await supabase.storage
+        .from(BUCKET_PRESTAMOS)
+        .createSignedUrl(ruta, 60 * 60 * 24 * 365); // 1 año
 
-    return data.publicUrl;
+    if (signError) {
+        // Fallback a URL pública si el bucket aún es público
+        const { data: pubData } = supabase.storage
+            .from(BUCKET_PRESTAMOS)
+            .getPublicUrl(ruta);
+        return pubData.publicUrl;
+    }
+
+    return data.signedUrl;
 }
 
 async function subirFotosVehiculo(prestamoId, fotos) {
@@ -127,121 +162,180 @@ function validarConfiguracion() {
     }
 }
 
+// ─── Funciones con soporte offline ─────────────────
+
 export async function obtenerPrestamos(perfil) {
     validarConfiguracion();
 
-    let consulta = supabase
-        .from(TABLA_PRESTAMOS)
-        .select("*")
-        .order("fecha_ingreso", { ascending: false });
+    // Si hay conexión, intentar servidor
+    if (navigator.onLine) {
+        try {
+            let consulta = supabase
+                .from(TABLA_PRESTAMOS)
+                .select("*")
+                .order("fecha_ingreso", { ascending: false });
 
-    if (perfil?.rol !== "admin") {
-        consulta = consulta.eq("usuario_id", perfil?.id);
+            if (perfil?.rol !== "admin") {
+                consulta = consulta.eq("usuario_id", perfil?.id);
+            }
+
+            const { data, error } = await consulta;
+
+            if (error) throw error;
+
+            const prestamos = data.map(desdeSupabase);
+
+            // Guardar en caché local para uso offline
+            await guardarPrestamosLocal(prestamos);
+
+            return prestamos;
+        } catch (error) {
+            console.warn("Error conectando a Supabase, usando caché local:", error);
+        }
     }
 
-    const { data, error } = await consulta;
-
-    if (error) throw error;
-
-    return data.map(desdeSupabase);
+    // Offline o error: usar caché local
+    const locales = await cargarPrestamosLocal();
+    return locales.length > 0 ? locales : [];
 }
 
 export async function guardarPrestamo(prestamo) {
     validarConfiguracion();
 
-    const prestamoSupabase = await haciaSupabase(prestamo);
-    let { data, error } = await supabase
-        .from(TABLA_PRESTAMOS)
-        .upsert(prestamoSupabase)
-        .select()
-        .single();
+    if (!navigator.onLine) {
+        return crearPrestamoOffline(prestamo);
+    }
 
-    if (error && error.message?.includes("danio_previo")) {
-        const prestamoSinDanioPrevio = { ...prestamoSupabase };
-        delete prestamoSinDanioPrevio.danio_previo;
-
-        const resultadoFallback = await supabase
+    try {
+        const prestamoSupabase = await haciaSupabase(prestamo);
+        let { data, error } = await supabase
             .from(TABLA_PRESTAMOS)
-            .upsert(prestamoSinDanioPrevio)
+            .upsert(prestamoSupabase)
             .select()
             .single();
 
-        data = resultadoFallback.data;
-        error = resultadoFallback.error;
+        if (error && error.message?.includes("danio_previo")) {
+            const prestamoSinDanioPrevio = { ...prestamoSupabase };
+            delete prestamoSinDanioPrevio.danio_previo;
+
+            const resultadoFallback = await supabase
+                .from(TABLA_PRESTAMOS)
+                .upsert(prestamoSinDanioPrevio)
+                .select()
+                .single();
+
+            data = resultadoFallback.data;
+            error = resultadoFallback.error;
+        }
+
+        if (error) throw error;
+
+        const guardado = desdeSupabase(data);
+        await agregarPrestamoLocal(guardado);
+        return guardado;
+    } catch (error) {
+        // Si falla la red, encolar offline
+        return crearPrestamoOffline(prestamo);
     }
-
-    if (error) throw error;
-
-    return desdeSupabase(data);
 }
 
 export async function marcarPrestamoDevuelto(id) {
     validarConfiguracion();
 
-    const { data, error } = await supabase
-        .from(TABLA_PRESTAMOS)
-        .update({
-            estado: "Devuelto",
-            fecha_devolucion: new Date().toISOString(),
-            fecha_actualizacion: new Date().toISOString(),
-        })
-        .eq("id", String(id))
-        .select()
-        .single();
+    if (!navigator.onLine) {
+        return devolverPrestamoOffline({ id });
+    }
 
-    if (error) throw error;
+    try {
+        const { data, error } = await supabase
+            .from(TABLA_PRESTAMOS)
+            .update({
+                estado: "Devuelto",
+                fecha_devolucion: new Date().toISOString(),
+                fecha_actualizacion: new Date().toISOString(),
+            })
+            .eq("id", String(id))
+            .select()
+            .single();
 
-    return desdeSupabase(data);
+        if (error) throw error;
+
+        const devuelto = desdeSupabase(data);
+        await actualizarPrestamoLocal(devuelto);
+        return devuelto;
+    } catch (error) {
+        return devolverPrestamoOffline({ id });
+    }
 }
 
 export async function reactivarPrestamo(id) {
     validarConfiguracion();
 
-    const { data, error } = await supabase
-        .from(TABLA_PRESTAMOS)
-        .update({
-            estado: "Activo",
-            fecha_devolucion: null,
-            fecha_actualizacion: new Date().toISOString(),
-        })
-        .eq("id", String(id))
-        .select()
-        .single();
+    if (!navigator.onLine) {
+        return reactivarPrestamoOffline({ id });
+    }
 
-    if (error) throw error;
+    try {
+        const { data, error } = await supabase
+            .from(TABLA_PRESTAMOS)
+            .update({
+                estado: "Activo",
+                fecha_devolucion: null,
+                fecha_actualizacion: new Date().toISOString(),
+            })
+            .eq("id", String(id))
+            .select()
+            .single();
 
-    return desdeSupabase(data);
+        if (error) throw error;
+
+        const reactivado = desdeSupabase(data);
+        await actualizarPrestamoLocal(reactivado);
+        return reactivado;
+    } catch (error) {
+        return reactivarPrestamoOffline({ id });
+    }
 }
 
 export async function eliminarPrestamo(prestamo) {
     validarConfiguracion();
 
-    const rutasFotos = [
-        ...normalizarFotosVehiculo(prestamo).map(obtenerRutaFotoDesdeUrl),
-    ].filter(Boolean);
-    const rutasUnicas = [...new Set(rutasFotos)];
-
-    const { data, error } = await supabase
-        .from(TABLA_PRESTAMOS)
-        .delete()
-        .eq("id", String(prestamo.id))
-        .select("id");
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-        throw new Error(
-            "Supabase no elimino el arriendo. Revisa las politicas de eliminacion."
-        );
+    if (!navigator.onLine) {
+        return eliminarPrestamoOffline(prestamo);
     }
 
-    if (rutasUnicas.length > 0) {
-        const { error: errorFotos } = await supabase.storage
-            .from(BUCKET_PRESTAMOS)
-            .remove(rutasUnicas);
+    try {
+        const rutasFotos = [
+            ...normalizarFotosVehiculo(prestamo).map(obtenerRutaFotoDesdeUrl),
+        ].filter(Boolean);
+        const rutasUnicas = [...new Set(rutasFotos)];
 
-        if (errorFotos) {
-            console.error("No se pudieron eliminar las fotos del arriendo.", errorFotos);
+        const { data, error } = await supabase
+            .from(TABLA_PRESTAMOS)
+            .delete()
+            .eq("id", String(prestamo.id))
+            .select("id");
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            throw new Error(
+                "Supabase no elimino el arriendo. Revisa las politicas de eliminacion."
+            );
         }
+
+        if (rutasUnicas.length > 0) {
+            const { error: errorFotos } = await supabase.storage
+                .from(BUCKET_PRESTAMOS)
+                .remove(rutasUnicas);
+
+            if (errorFotos) {
+                console.error("No se pudieron eliminar las fotos del arriendo.", errorFotos);
+            }
+        }
+
+        await eliminarPrestamoLocal(prestamo.id);
+    } catch (error) {
+        return eliminarPrestamoOffline(prestamo);
     }
 }

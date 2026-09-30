@@ -49,9 +49,24 @@ export async function actualizarPrestamoLocal(prestamo) {
     await db.put(STORE_PRESTAMOS, prestamo);
 }
 
+export async function obtenerPrestamoLocal(id) {
+    const db = await getDB();
+    return db.get(STORE_PRESTAMOS, id);
+}
+
 export async function eliminarPrestamoLocal(id) {
     const db = await getDB();
     await db.delete(STORE_PRESTAMOS, id);
+}
+
+export async function reemplazarPrestamosLocal(prestamos) {
+    const db = await getDB();
+    const tx = db.transaction(STORE_PRESTAMOS, "readwrite");
+    await tx.objectStore(STORE_PRESTAMOS).clear();
+    for (const p of prestamos) {
+        tx.objectStore(STORE_PRESTAMOS).put(p);
+    }
+    await tx.done;
 }
 
 export async function cargarPrestamosLocal() {

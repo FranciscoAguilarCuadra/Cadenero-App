@@ -80,26 +80,29 @@ export async function sincronizarCola() {
 async function ejecutarOperacion(operacion) {
     switch (operacion.tipo) {
         case "crear":
-            await guardarPrestamo(operacion.datos);
+            await guardarPrestamo(operacion.datos, { esSync: true });
             break;
 
         case "editar":
-            await guardarPrestamo(operacion.datos);
+            await guardarPrestamo(operacion.datos, { esSync: true });
             break;
 
         case "devolver":
-            await marcarPrestamoDevuelto(operacion.datos.id);
+            await marcarPrestamoDevuelto(operacion.datos.id, { esSync: true });
             break;
 
         case "reactivar":
-            await reactivarPrestamo(operacion.datos.id);
+            await reactivarPrestamo(operacion.datos.id, { esSync: true });
             break;
 
         case "eliminar":
-            await eliminarPrestamo({
-                id: operacion.datos.id,
-                fotosVehiculo: operacion.datos.fotos || [],
-            });
+            await eliminarPrestamo(
+                {
+                    id: operacion.datos.id,
+                    fotosVehiculo: operacion.datos.fotos || [],
+                },
+                { esSync: true }
+            );
             break;
 
         default:

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaEye, FaEyeSlash, FaWifi } from "react-icons/fa";
 
-import { isOnline } from "../services/connectivity";
+import { isOnline, onConnectivityChange } from "../services/connectivity";
 import "../styles/Login.css";
 
 function Login({ onLogin }) {
@@ -10,8 +10,9 @@ function Login({ onLogin }) {
     const [error, setError] = useState("");
     const [cargando, setCargando] = useState(false);
     const [mostrarPassword, setMostrarPassword] = useState(false);
+    const [online, setOnline] = useState(isOnline());
 
-    const online = isOnline();
+    useEffect(() => onConnectivityChange(setOnline), []);
 
     async function manejarSubmit(event) {
         event.preventDefault();

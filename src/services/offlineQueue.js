@@ -2,6 +2,7 @@ import {
     agregarPrestamoLocal,
     actualizarPrestamoLocal,
     eliminarPrestamoLocal,
+    obtenerPrestamoLocal,
     encolarOperacion,
     obtenerCola,
     eliminarDeCola,
@@ -29,7 +30,9 @@ export async function editarPrestamoOffline(prestamo) {
 }
 
 export async function devolverPrestamoOffline(prestamo) {
+    const existente = await obtenerPrestamoLocal(prestamo.id);
     const actualizado = {
+        ...(existente || {}),
         ...prestamo,
         estado: "Devuelto",
         fechaDevolucion: new Date().toISOString(),
@@ -43,7 +46,9 @@ export async function devolverPrestamoOffline(prestamo) {
 }
 
 export async function reactivarPrestamoOffline(prestamo) {
+    const existente = await obtenerPrestamoLocal(prestamo.id);
     const actualizado = {
+        ...(existente || {}),
         ...prestamo,
         estado: "Activo",
         fechaDevolucion: null,

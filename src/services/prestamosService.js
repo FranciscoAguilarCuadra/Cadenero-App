@@ -1,7 +1,7 @@
 import { isSupabaseConfigured, supabase } from "../supabase";
 import {
     cargarPrestamosLocal,
-    guardarPrestamosLocal,
+    reemplazarPrestamosLocal,
     agregarPrestamoLocal,
     actualizarPrestamoLocal,
     eliminarPrestamoLocal,
@@ -18,6 +18,17 @@ const BUCKET_PRESTAMOS = "prestamos";
 const TABLA_PRESTAMOS = "prestamos";
 
 const dataUrlMimeRegex = /data:(.*);base64/;
+
+// ─── Helpers ───────────────────────────────────────
+
+function esErrorDeRed(error) {
+    return (
+        error instanceof TypeError ||
+        /fetch|network|failed to fetch|load failed|ERR_NETWORK|ERR_INTERNET/i.test(
+            error?.message || ""
+        )
+    );
+}
 
 function dataUrlToBlob(dataUrl) {
     const [metadata, base64] = dataUrl.split(",");
@@ -39,7 +50,6 @@ function crearNombreFoto(prestamoId, campo) {
 function obtenerRutaFotoDesdeUrl(url) {
     if (!url) return null;
 
-    // Soporta URLs públicas y firmadas
     const marcadorPublico = `/storage/v1/object/public/${BUCKET_PRESTAMOS}/`;
     const marcadorPrivado = `/storage/v1/object/sign/${BUCKET_PRESTAMOS}/`;
 
@@ -87,13 +97,11 @@ async function subirFotoSiCorresponde(prestamoId, campo, valor) {
 
     if (error) throw error;
 
-    // Usar URL firmada (bucket privado) en vez de URL pública
     const { data, error: signError } = await supabase.storage
         .from(BUCKET_PRESTAMOS)
-        .createSignedUrl(ruta, 60 * 60 * 24 * 365); // 1 año
+        .createSignedUrl(ruta, 60 * 60 * 24 * 365);
 
     if (signError) {
-        // Fallback a URL pública si el bucket aún es público
         const { data: pubData } = supabase.storage
             .from(BUCKET_PRESTAMOS)
             .getPublicUrl(ruta);
@@ -167,7 +175,6 @@ function validarConfiguracion() {
 export async function obtenerPrestamos(perfil) {
     validarConfiguracion();
 
-    // Si hay conexión, intentar servidor
     if (navigator.onLine) {
         try {
             let consulta = supabase
@@ -185,24 +192,25 @@ export async function obtenerPrestamos(perfil) {
 
             const prestamos = data.map(desdeSupabase);
 
-            // Guardar en caché local para uso offline
-            await guardarPrestamosLocal(prestamos);
+            // Reemplazar caché completa (elimina registros borrados del servidor)
+            await reemplazarPrestamosLocal(prestamos);
 
             return prestamos;
         } catch (error) {
-            console.warn("Error conectando a Supabase, usando caché local:", error);
+            if (!esErrorDeRed(error)) throw error;
+            console.warn("Error de red consultando Supabase, usando caché local:", error);
         }
     }
 
-    // Offline o error: usar caché local
     const locales = await cargarPrestamosLocal();
     return locales.length > 0 ? locales : [];
 }
 
-export async function guardarPrestamo(prestamo) {
+export async function guardarPrestamo(prestamo, { esSync = false } = {}) {
     validarConfiguracion();
 
     if (!navigator.onLine) {
+        if (esSync) throw new Error("Sin conexión durante sincronización.");
         return crearPrestamoOffline(prestamo);
     }
 
@@ -234,15 +242,16 @@ export async function guardarPrestamo(prestamo) {
         await agregarPrestamoLocal(guardado);
         return guardado;
     } catch (error) {
-        // Si falla la red, encolar offline
+        if (!esErrorDeRed(error) || esSync) throw error;
         return crearPrestamoOffline(prestamo);
     }
 }
 
-export async function marcarPrestamoDevuelto(id) {
+export async function marcarPrestamoDevuelto(id, { esSync = false } = {}) {
     validarConfiguracion();
 
     if (!navigator.onLine) {
+        if (esSync) throw new Error("Sin conexión durante sincronización.");
         return devolverPrestamoOffline({ id });
     }
 
@@ -264,14 +273,16 @@ export async function marcarPrestamoDevuelto(id) {
         await actualizarPrestamoLocal(devuelto);
         return devuelto;
     } catch (error) {
+        if (!esErrorDeRed(error) || esSync) throw error;
         return devolverPrestamoOffline({ id });
     }
 }
 
-export async function reactivarPrestamo(id) {
+export async function reactivarPrestamo(id, { esSync = false } = {}) {
     validarConfiguracion();
 
     if (!navigator.onLine) {
+        if (esSync) throw new Error("Sin conexión durante sincronización.");
         return reactivarPrestamoOffline({ id });
     }
 
@@ -293,14 +304,16 @@ export async function reactivarPrestamo(id) {
         await actualizarPrestamoLocal(reactivado);
         return reactivado;
     } catch (error) {
+        if (!esErrorDeRed(error) || esSync) throw error;
         return reactivarPrestamoOffline({ id });
     }
 }
 
-export async function eliminarPrestamo(prestamo) {
+export async function eliminarPrestamo(prestamo, { esSync = false } = {}) {
     validarConfiguracion();
 
     if (!navigator.onLine) {
+        if (esSync) throw new Error("Sin conexión durante sincronización.");
         return eliminarPrestamoOffline(prestamo);
     }
 
@@ -336,6 +349,7 @@ export async function eliminarPrestamo(prestamo) {
 
         await eliminarPrestamoLocal(prestamo.id);
     } catch (error) {
+        if (!esErrorDeRed(error) || esSync) throw error;
         return eliminarPrestamoOffline(prestamo);
     }
 }

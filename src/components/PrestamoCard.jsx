@@ -129,6 +129,12 @@ function PrestamoCard({
 
         const observer = new IntersectionObserver(
             ([entry]) => {
+                // No aplicar is-partial si la galería está abierta
+                if (indiceGaleria !== null) {
+                    nodo.classList.remove("is-partial");
+                    return;
+                }
+
                 if (entry.isIntersecting) {
                     nodo.classList.remove("is-partial");
                 } else {
@@ -141,7 +147,7 @@ function PrestamoCard({
         observer.observe(nodo);
 
         return () => observer.disconnect();
-    }, []);
+    }, [indiceGaleria]);
 
     function mostrarFotoAnterior() {
         setIndiceGaleria((indiceActual) =>

@@ -16,6 +16,7 @@ export async function crearPrestamoOffline(prestamo) {
         tipo: "crear",
         datos: prestamo,
     });
+    return prestamo;
 }
 
 export async function editarPrestamoOffline(prestamo) {
@@ -24,6 +25,7 @@ export async function editarPrestamoOffline(prestamo) {
         tipo: "editar",
         datos: prestamo,
     });
+    return prestamo;
 }
 
 export async function devolverPrestamoOffline(prestamo) {

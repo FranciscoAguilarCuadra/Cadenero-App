@@ -2,6 +2,7 @@ import {
     obtenerCola,
     eliminarDeCola,
     actualizarOperacionCola,
+    contarPendientes,
 } from "./localCache";
 import {
     guardarPrestamo,
@@ -20,14 +21,23 @@ export function onSyncProgress(callback) {
     };
 }
 
-function notificarProgreso(pendientes, completadas, total) {
-    listenersProgreso.forEach((fn) => fn({ pendientes, completadas, total }));
+function notificarProgreso({ sincronizando, pendientes, completadas }) {
+    listenersProgreso.forEach((fn) =>
+        fn({ sincronizando, pendientes, completadas })
+    );
 }
 
+/**
+ * Sube todo lo pendiente. Ninguna operación se descarta jamás: si algo falla,
+ * se queda en la cola y se reintenta en la próxima oportunidad, porque un
+ * arriendo capturado no puede perderse.
+ */
 export async function sincronizarCola() {
     if (estaSincronizando) return { exito: true, sincronizadas: 0 };
 
     estaSincronizando = true;
+
+    let completadas = 0;
 
     try {
         const cola = await obtenerCola();
@@ -37,43 +47,70 @@ export async function sincronizarCola() {
             return { exito: true, sincronizadas: 0 };
         }
 
-        let completadas = 0;
-        let fallidas = [];
+        notificarProgreso({
+            sincronizando: true,
+            pendientes: total,
+            completadas,
+        });
 
-        notificarProgreso(total, 0, total);
+        // Las operaciones de un mismo arriendo se procesan en orden y se detienen
+        // en el primer fallo de ese arriendo: así un cambio viejo nunca puede
+        // pisar a uno más nuevo al reintentar. Los demás arriendos siguen igual.
+        const operacionesPorRegistro = new Map();
 
         for (const operacion of cola) {
-            try {
-                await ejecutarOperacion(operacion);
-                await eliminarDeCola(operacion.operacionId);
-                completadas++;
-                notificarProgreso(total - completadas, completadas, total);
-            } catch (error) {
-                console.error(
-                    `Error sincronizando operación ${operacion.operacionId}:`,
-                    error
-                );
+            const id = String(operacion.datos?.id ?? operacion.operacionId);
 
-                operacion.intentos = (operacion.intentos || 0) + 1;
-                operacion.ultimoError = error.message;
+            if (!operacionesPorRegistro.has(id)) {
+                operacionesPorRegistro.set(id, []);
+            }
 
-                if (operacion.intentos >= 3) {
+            operacionesPorRegistro.get(id).push(operacion);
+        }
+
+        for (const operaciones of operacionesPorRegistro.values()) {
+            for (const operacion of operaciones) {
+                try {
+                    await ejecutarOperacion(operacion);
                     await eliminarDeCola(operacion.operacionId);
-                    fallidas.push(operacion);
-                } else {
+                    completadas += 1;
+
+                    notificarProgreso({
+                        sincronizando: true,
+                        pendientes: total - completadas,
+                        completadas,
+                    });
+                } catch (error) {
+                    console.error(
+                        `Error sincronizando operación ${operacion.operacionId}:`,
+                        error
+                    );
+
+                    operacion.intentos = (operacion.intentos || 0) + 1;
+                    operacion.ultimoError = error.message;
+                    operacion.ultimoIntento = Date.now();
                     await actualizarOperacionCola(operacion);
+
+                    // Este arriendo espera el próximo intento.
+                    break;
                 }
             }
         }
 
-        return {
-            exito: fallidas.length === 0,
-            sincronizadas: completadas,
-            fallidas,
-        };
+        const pendientes = await contarPendientes();
+
+        return { exito: pendientes === 0, sincronizadas: completadas };
     } finally {
         estaSincronizando = false;
-        notificarProgreso(0, 0, 0);
+
+        // El estado final se publica siempre, aunque algo falle por el camino:
+        // el aviso nunca se queda colgado en "Sincronizando…".
+        const pendientes = await contarPendientes().catch(() => 0);
+        notificarProgreso({
+            sincronizando: false,
+            pendientes,
+            completadas,
+        });
     }
 }
 

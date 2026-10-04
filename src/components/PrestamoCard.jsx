@@ -5,6 +5,7 @@ import {
     FaCheckCircle,
     FaChevronLeft,
     FaChevronRight,
+    FaCloudUploadAlt,
     FaEdit,
     FaMoneyBillWave,
     FaRedo,
@@ -108,6 +109,7 @@ function obtenerProgresoDias(prestamo) {
 
 function PrestamoCard({
     prestamo,
+    pendiente = false,
     onEditar,
     onDevolver,
     onEliminar,
@@ -229,6 +231,13 @@ function PrestamoCard({
                         <FaCalendarAlt />
                         {progresoDias.texto}
                     </p>
+
+                    {pendiente && (
+                        <p className="sync-pending">
+                            <FaCloudUploadAlt aria-hidden="true" />
+                            Pendiente de sincronizar
+                        </p>
+                    )}
                 </div>
             </div>
 

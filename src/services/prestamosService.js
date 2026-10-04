@@ -1,14 +1,13 @@
 import { isSupabaseConfigured, supabase } from "../supabase";
 import {
     cargarPrestamosLocal,
-    reemplazarPrestamosLocal,
+    sincronizarPrestamosLocales,
     agregarPrestamoLocal,
     actualizarPrestamoLocal,
     eliminarPrestamoLocal,
 } from "./localCache";
 import {
     crearPrestamoOffline,
-    editarPrestamoOffline,
     devolverPrestamoOffline,
     reactivarPrestamoOffline,
     eliminarPrestamoOffline,
@@ -170,6 +169,21 @@ function validarConfiguracion() {
     }
 }
 
+// El almacén local es del equipo, no del usuario: se aplica el mismo aislamiento
+// que la base de datos (cada cadenero ve lo suyo, el admin ve todo).
+function filtrarPorUsuario(prestamos, perfil) {
+    if (perfil?.rol === "admin") return prestamos;
+
+    const usuarioId = perfil?.id != null ? String(perfil.id) : null;
+
+    if (!usuarioId) return [];
+
+    return prestamos.filter(
+        (prestamo) =>
+            prestamo.usuarioId != null && String(prestamo.usuarioId) === usuarioId
+    );
+}
+
 // ─── Funciones con soporte offline ─────────────────
 
 export async function obtenerPrestamos(perfil) {
@@ -192,10 +206,12 @@ export async function obtenerPrestamos(perfil) {
 
             const prestamos = data.map(desdeSupabase);
 
-            // Reemplazar caché completa (elimina registros borrados del servidor)
-            await reemplazarPrestamosLocal(prestamos);
+            // Se fusiona con lo que hay en el teléfono: lo pendiente nunca se
+            // borra por una carga, y se elimina solo lo que el servidor confirma
+            // ausente y sin operaciones pendientes.
+            await sincronizarPrestamosLocales(prestamos);
 
-            return prestamos;
+            return filtrarPorUsuario(await cargarPrestamosLocal(), perfil);
         } catch (error) {
             if (!esErrorDeRed(error)) throw error;
             console.warn("Error de red consultando Supabase, usando caché local:", error);
@@ -203,7 +219,7 @@ export async function obtenerPrestamos(perfil) {
     }
 
     const locales = await cargarPrestamosLocal();
-    return locales.length > 0 ? locales : [];
+    return filtrarPorUsuario(locales, perfil);
 }
 
 export async function guardarPrestamo(prestamo, { esSync = false } = {}) {
@@ -265,9 +281,16 @@ export async function marcarPrestamoDevuelto(id, { esSync = false } = {}) {
             })
             .eq("id", String(id))
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
+
+        if (!data) {
+            // El arriendo ya no está en el servidor: no hay nada que devolver.
+            if (esSync) return null;
+
+            throw new Error("Este arriendo ya no existe en el servidor.");
+        }
 
         const devuelto = desdeSupabase(data);
         await actualizarPrestamoLocal(devuelto);
@@ -296,9 +319,16 @@ export async function reactivarPrestamo(id, { esSync = false } = {}) {
             })
             .eq("id", String(id))
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
+
+        if (!data) {
+            // El arriendo ya no está en el servidor: no hay nada que reactivar.
+            if (esSync) return null;
+
+            throw new Error("Este arriendo ya no existe en el servidor.");
+        }
 
         const reactivado = desdeSupabase(data);
         await actualizarPrestamoLocal(reactivado);
@@ -332,8 +362,12 @@ export async function eliminarPrestamo(prestamo, { esSync = false } = {}) {
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            throw new Error(
-                "Supabase no elimino el arriendo. Revisa las politicas de eliminacion."
+            // Nada quedó por borrar: el arriendo ya no existe en el servidor.
+            // Se da por hecha la eliminación en vez de fallar para siempre, que
+            // es lo que dejaba una operación atascada en la cola.
+            console.warn(
+                "El arriendo no existía en el servidor; la eliminación se da por hecha.",
+                prestamo.id
             );
         }
 

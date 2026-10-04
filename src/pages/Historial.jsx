@@ -11,6 +11,7 @@ function Historial({
     prestamos,
     mensajeExterno,
     usuario,
+    pendientesIds,
     onEliminarPrestamo,
     onReactivarPrestamo,
     onLogout,
@@ -120,6 +121,9 @@ function Historial({
                                     <PrestamoCard
                                         key={prestamo.id}
                                         prestamo={prestamo}
+                                        pendiente={pendientesIds.has(
+                                            String(prestamo.id)
+                                        )}
                                         onEliminar={manejarEliminacion}
                                         onReactivar={manejarReactivacion}
                                     />

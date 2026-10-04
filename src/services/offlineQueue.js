@@ -4,9 +4,6 @@ import {
     eliminarPrestamoLocal,
     obtenerPrestamoLocal,
     encolarOperacion,
-    obtenerCola,
-    eliminarDeCola,
-    actualizarOperacionCola,
 } from "./localCache";
 
 // ─── Encolar operaciones ───────────────────────────

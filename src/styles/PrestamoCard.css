@@ -212,6 +212,13 @@
     color: #4b5563;
 }
 
+.prestamo-details .sync-pending {
+    grid-column: 1 / -1;
+    background: #fffbeb;
+    color: #92400e;
+    font-weight: bold;
+}
+
 .prestamo-buttons {
     grid-area: buttons;
     display: grid;

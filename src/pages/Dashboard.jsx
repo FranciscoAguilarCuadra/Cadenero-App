@@ -28,6 +28,7 @@ function Dashboard({
     cargandoPrestamos,
     mensajeExterno,
     usuario,
+    pendientesIds,
     onAgregarPrestamo,
     onEditarPrestamo,
     onDevolverPrestamo,
@@ -203,6 +204,9 @@ function Dashboard({
                                     <PrestamoCard
                                         key={prestamo.id}
                                         prestamo={prestamo}
+                                        pendiente={pendientesIds.has(
+                                            String(prestamo.id)
+                                        )}
                                         onEditar={abrirEditarPrestamo}
                                         onDevolver={manejarDevolucion}
                                         onEliminar={manejarEliminacion}

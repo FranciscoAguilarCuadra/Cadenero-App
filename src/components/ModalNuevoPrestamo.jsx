@@ -328,7 +328,9 @@ function ModalNuevoPrestamo({
 
                 {guardando && (
                     <p className="save-status">
-                        Subiendo fotos y guardando datos...
+                        {navigator.onLine
+                            ? "Subiendo fotos y guardando datos..."
+                            : "Guardando el arriendo en este teléfono..."}
                     </p>
                 )}
 

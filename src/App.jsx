@@ -9,7 +9,12 @@ import prestamosIniciales from "./data/prestamos";
 import { isSupabaseConfigured } from "./supabase";
 import { isOnline, onConnectivityChange } from "./services/connectivity";
 import { sincronizarCola } from "./services/syncService";
-import { guardarMeta, obtenerMeta } from "./services/localCache";
+import {
+    guardarMeta,
+    obtenerCola,
+    obtenerMeta,
+    onColaChange,
+} from "./services/localCache";
 
 const Admin = lazy(() => import("./pages/Admin"));
 import {
@@ -82,6 +87,31 @@ function App() {
     const [cargandoAuth, setCargandoAuth] = useState(isSupabaseConfigured);
     const [cargandoPrestamos, setCargandoPrestamos] = useState(false);
     const [errorCargaPrestamos, setErrorCargaPrestamos] = useState("");
+    const [idsPendientes, setIdsPendientes] = useState(() => new Set());
+
+    const actualizarIdsPendientes = useCallback(async () => {
+        try {
+            const operaciones = await obtenerCola();
+            setIdsPendientes(
+                new Set(
+                    operaciones.map((operacion) => String(operacion.datos?.id))
+                )
+            );
+        } catch (error) {
+            console.error("No se pudo leer la cola de sincronización.", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!isSupabaseConfigured) return undefined;
+
+        return onColaChange(
+            () => {
+                void actualizarIdsPendientes();
+            },
+            { notificarAlInicio: true }
+        );
+    }, [actualizarIdsPendientes]);
 
     const cargarPrestamosRemotos = useCallback(
         async function cargarPrestamosRemotos(perfilUsuario) {
@@ -182,25 +212,44 @@ function App() {
         return dejarDeEscuchar;
     }, [aplicarSesion, cargarPrestamosRemotos]);
 
-    // ─── Sincronizar al reconectar ─────────────────
+    // ─── Sincronizar al reconectar y al volver a la app ─
     useEffect(() => {
-        if (!isSupabaseConfigured) return;
+        if (!isSupabaseConfigured) return undefined;
 
-        const unsubscribe = onConnectivityChange(async (online) => {
-            if (online) {
-                try {
-                    await sincronizarCola();
-                    // Refrescar datos desde servidor después de sync
-                    if (perfil) {
-                        await cargarPrestamosRemotos(perfil);
-                    }
-                } catch (error) {
-                    console.error("Error durante sincronización:", error);
+        async function sincronizarYRefrescar() {
+            try {
+                await sincronizarCola();
+
+                // Refrescar datos desde servidor después de sync
+                if (perfil) {
+                    await cargarPrestamosRemotos(perfil);
                 }
+            } catch (error) {
+                console.error("Error durante sincronización:", error);
+            }
+        }
+
+        const unsubscribe = onConnectivityChange((online) => {
+            if (online) {
+                void sincronizarYRefrescar();
             }
         });
 
-        return unsubscribe;
+        function alVolverALaApp() {
+            if (document.visibilityState === "visible" && isOnline()) {
+                void sincronizarYRefrescar();
+            }
+        }
+
+        document.addEventListener("visibilitychange", alVolverALaApp);
+
+        // Al abrir la app también se intenta subir lo que haya quedado pendiente.
+        void sincronizarYRefrescar();
+
+        return () => {
+            unsubscribe();
+            document.removeEventListener("visibilitychange", alVolverALaApp);
+        };
     }, [perfil, cargarPrestamosRemotos]);
 
     // ─── Guardar en localStorage (modo sin Supabase) ─
@@ -376,6 +425,7 @@ function App() {
                             cargandoPrestamos={cargandoPrestamos}
                             mensajeExterno={errorCargaPrestamos}
                             usuario={perfil}
+                            pendientesIds={idsPendientes}
                             onAgregarPrestamo={agregarPrestamo}
                             onEditarPrestamo={editarPrestamo}
                             onDevolverPrestamo={devolverPrestamo}
@@ -392,6 +442,7 @@ function App() {
                             prestamos={prestamosDevueltos}
                             mensajeExterno={errorCargaPrestamos}
                             usuario={perfil}
+                            pendientesIds={idsPendientes}
                             onEliminarPrestamo={eliminarPrestamo}
                             onReactivarPrestamo={reactivarPrestamo}
                             onLogout={manejarLogout}

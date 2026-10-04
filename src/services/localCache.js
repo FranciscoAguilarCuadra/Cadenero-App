@@ -6,6 +6,15 @@ const STORE_PRESTAMOS = "prestamos";
 const STORE_COLA = "cola";
 const STORE_META = "meta";
 
+// El id de un arriendo viaja como texto en Supabase. Se normaliza al entrar y al
+// salir del almacén para que una misma copia no viva dos veces (el número y el
+// texto son claves distintas en IndexedDB).
+function conIdTexto(registro) {
+    return registro && registro.id !== undefined
+        ? { ...registro, id: String(registro.id) }
+        : registro;
+}
+
 async function getDB() {
     return openDB(DB_NAME, DB_VERSION, {
         upgrade(db) {
@@ -25,6 +34,27 @@ async function getDB() {
     });
 }
 
+// ─── Avisos de cambios en la cola ───────────────────
+
+let listenersCola = [];
+
+export function onColaChange(callback, { notificarAlInicio = false } = {}) {
+    listenersCola.push(callback);
+
+    if (notificarAlInicio) {
+        // Quien se suscribe recibe también el estado actual, no solo los cambios.
+        queueMicrotask(() => callback());
+    }
+
+    return () => {
+        listenersCola = listenersCola.filter((fn) => fn !== callback);
+    };
+}
+
+function notificarCambioCola() {
+    listenersCola.forEach((fn) => fn());
+}
+
 // ─── Prestamos ─────────────────────────────────────
 
 export async function guardarPrestamosLocal(prestamos) {
@@ -33,7 +63,7 @@ export async function guardarPrestamosLocal(prestamos) {
     const store = tx.objectStore(STORE_PRESTAMOS);
 
     for (const prestamo of prestamos) {
-        store.put(prestamo);
+        store.put(conIdTexto(prestamo));
     }
 
     await tx.done;
@@ -41,31 +71,64 @@ export async function guardarPrestamosLocal(prestamos) {
 
 export async function agregarPrestamoLocal(prestamo) {
     const db = await getDB();
-    await db.put(STORE_PRESTAMOS, prestamo);
+    await db.put(STORE_PRESTAMOS, conIdTexto(prestamo));
 }
 
 export async function actualizarPrestamoLocal(prestamo) {
     const db = await getDB();
-    await db.put(STORE_PRESTAMOS, prestamo);
+    await db.put(STORE_PRESTAMOS, conIdTexto(prestamo));
 }
 
 export async function obtenerPrestamoLocal(id) {
     const db = await getDB();
-    return db.get(STORE_PRESTAMOS, id);
+    return db.get(STORE_PRESTAMOS, String(id));
 }
 
 export async function eliminarPrestamoLocal(id) {
     const db = await getDB();
-    await db.delete(STORE_PRESTAMOS, id);
+    await db.delete(STORE_PRESTAMOS, String(id));
 }
 
-export async function reemplazarPrestamosLocal(prestamos) {
+/**
+ * Fusiona lo que viene del servidor con lo que hay en el teléfono.
+ *
+ * Un arriendo nunca se borra solo: se elimina únicamente lo que el servidor
+ * confirma ausente y que además no tenga ninguna operación pendiente.
+ */
+export async function sincronizarPrestamosLocales(prestamos) {
     const db = await getDB();
-    const tx = db.transaction(STORE_PRESTAMOS, "readwrite");
-    await tx.objectStore(STORE_PRESTAMOS).clear();
-    for (const p of prestamos) {
-        tx.objectStore(STORE_PRESTAMOS).put(p);
+    const tx = db.transaction([STORE_PRESTAMOS, STORE_COLA], "readwrite");
+    const storePrestamos = tx.objectStore(STORE_PRESTAMOS);
+    const storeCola = tx.objectStore(STORE_COLA);
+
+    const locales = await storePrestamos.getAll();
+    const operaciones = await storeCola.getAll();
+
+    const idsRemotos = new Set(prestamos.map((prestamo) => String(prestamo.id)));
+    const idsPendientes = new Set(
+        operaciones.map((operacion) => String(operacion.datos?.id))
+    );
+
+    for (const prestamo of prestamos) {
+        storePrestamos.put(conIdTexto(prestamo));
     }
+
+    for (const local of locales) {
+        const id = String(local.id);
+
+        if (idsRemotos.has(id)) {
+            // Copia anterior con el id en otro formato: ya entró la del servidor.
+            if (typeof local.id !== "string") {
+                storePrestamos.delete(local.id);
+            }
+            continue;
+        }
+
+        if (!idsPendientes.has(id)) {
+            storePrestamos.delete(local.id);
+        }
+    }
+
     await tx.done;
 }
 
@@ -87,7 +150,12 @@ export async function encolarOperacion(operacion) {
         intentos: 0,
     };
 
+    if (entrada.datos && entrada.datos.id !== undefined) {
+        entrada.datos = conIdTexto(entrada.datos);
+    }
+
     await db.put(STORE_COLA, entrada);
+    notificarCambioCola();
     return entrada;
 }
 
@@ -100,11 +168,13 @@ export async function obtenerCola() {
 export async function eliminarDeCola(operacionId) {
     const db = await getDB();
     await db.delete(STORE_COLA, operacionId);
+    notificarCambioCola();
 }
 
 export async function actualizarOperacionCola(operacion) {
     const db = await getDB();
     await db.put(STORE_COLA, operacion);
+    notificarCambioCola();
 }
 
 export async function contarPendientes() {

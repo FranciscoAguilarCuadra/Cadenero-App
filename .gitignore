@@ -26,3 +26,8 @@ supabase/.temp/
 *.njsproj
 *.sln
 *.sw?
+
+# Herramientas de agente (no forman parte de la app)
+.agents/
+.codex/
+.impeccable/

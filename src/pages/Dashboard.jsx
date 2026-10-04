@@ -8,6 +8,7 @@ import Header from "../components/Header";
 import ModalNuevoPrestamo from "../components/ModalNuevoPrestamo";
 import AppDialog from "../components/AppDialog";
 import { agruparPorFecha } from "../utils/fechas";
+import { mensajeDeError } from "../utils/errores";
 
 function esDeHoy(prestamo) {
     const fechaIngreso = prestamo.fechaIngreso ? new Date(prestamo.fechaIngreso) : null;
@@ -81,9 +82,7 @@ function Dashboard({
 
             cerrarModal();
         } catch (error) {
-            setErrorModal(
-                "No se pudo guardar el arriendo. Revisa tu conexión e intenta nuevamente."
-            );
+            setErrorModal(mensajeDeError(error, "guardar el arriendo"));
             console.error(error);
         } finally {
             setGuardando(false);
@@ -124,7 +123,7 @@ function Dashboard({
                     console.error(error);
                     mostrarErrorAccion(
                         "No se pudo devolver",
-                        "No se pudo marcar el arriendo como devuelto. Revisa tu conexión e intenta nuevamente."
+                        mensajeDeError(error, "devolver")
                     );
                 } finally {
                     setProcesandoDialogo(false);
@@ -151,7 +150,7 @@ function Dashboard({
                     console.error(error);
                     mostrarErrorAccion(
                         "No se pudo eliminar",
-                        "No se pudo eliminar el arriendo. Revisa tu conexión o las políticas de Supabase."
+                        mensajeDeError(error, "eliminar")
                     );
                 } finally {
                     setProcesandoDialogo(false);

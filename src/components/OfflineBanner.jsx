@@ -10,6 +10,7 @@ import {
 } from "../services/localCache";
 import { onSyncProgress } from "../services/syncService";
 import { formatearHora } from "../utils/fechas";
+import { esRechazoDePermisos } from "../utils/errores";
 
 import "../styles/modal.css";
 import "../styles/OfflineBanner.css";
@@ -50,6 +51,15 @@ function textoIntentos(operacion) {
     if (intentos === 0) return "Esperando para subir";
 
     return `${intentos} intento${intentos === 1 ? "" : "s"} sin éxito`;
+}
+
+// El error crudo es técnico; al usuario se le dice qué pasó de verdad.
+function textoDeError(mensaje) {
+    if (esRechazoDePermisos(mensaje)) {
+        return "Este arriendo pertenece a otra cuenta y no se puede modificar.";
+    }
+
+    return mensaje;
 }
 
 export default function OfflineBanner() {
@@ -232,7 +242,9 @@ export default function OfflineBanner() {
                                                     {operacion.ultimoError && (
                                                         <small>
                                                             Último error:{" "}
-                                                            {operacion.ultimoError}
+                                                            {textoDeError(
+                                                                operacion.ultimoError
+                                                            )}
                                                         </small>
                                                     )}
 

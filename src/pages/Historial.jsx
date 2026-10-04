@@ -4,6 +4,7 @@ import AppDialog from "../components/AppDialog";
 import Header from "../components/Header";
 import PrestamoCard from "../components/PrestamoCard";
 import { agruparPorFecha } from "../utils/fechas";
+import { mensajeDeError } from "../utils/errores";
 
 import "../styles/Dashboard.css";
 
@@ -54,7 +55,7 @@ function Historial({
                     console.error(error);
                     mostrarErrorAccion(
                         "No se pudo eliminar",
-                        "No se pudo eliminar el arriendo. Revisa tu conexión o las políticas de Supabase."
+                        mensajeDeError(error, "eliminar")
                     );
                 } finally {
                     setProcesandoDialogo(false);
@@ -81,7 +82,7 @@ function Historial({
                     console.error(error);
                     mostrarErrorAccion(
                         "No se pudo reactivar",
-                        "No se pudo reactivar el arriendo. Revisa tu conexión e intenta nuevamente."
+                        mensajeDeError(error, "reactivar")
                     );
                 } finally {
                     setProcesandoDialogo(false);

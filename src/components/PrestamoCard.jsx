@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 
 import { formatearHora } from "../utils/fechas";
+import DetalleArriendo from "./DetalleArriendo";
 import "../styles/PrestamoCard.css";
 
 const milisegundosPorDia = 24 * 60 * 60 * 1000;
@@ -117,6 +118,7 @@ function PrestamoCard({
 }) {
     const cardRef = useRef(null);
     const [indiceGaleria, setIndiceGaleria] = useState(null);
+    const [detalleAbierto, setDetalleAbierto] = useState(false);
     const fotos = obtenerFotos(prestamo);
     const fotoPrincipal = fotos[0];
     const tieneFotos = fotos.length > 0;
@@ -163,6 +165,21 @@ function PrestamoCard({
         );
     }
 
+    // Cualquier punto del cuerpo del arriendo abre el detalle; los botones
+    // (eliminar, por ejemplo) conservan su propia función.
+    function abrirDetalle(evento) {
+        if (evento.target.closest("button")) return;
+
+        setDetalleAbierto(true);
+    }
+
+    function abrirDetalleConTecla(evento) {
+        if (evento.key === "Enter" || evento.key === " ") {
+            evento.preventDefault();
+            setDetalleAbierto(true);
+        }
+    }
+
     return (
         <article
             ref={cardRef}
@@ -190,7 +207,14 @@ function PrestamoCard({
                 )}
             </div>
 
-            <div className="prestamo-main">
+            <div
+                className="prestamo-main"
+                role="button"
+                tabIndex={0}
+                aria-label="Ver detalle del arriendo"
+                onClick={abrirDetalle}
+                onKeyDown={abrirDetalleConTecla}
+            >
                 <div className="prestamo-header">
                     <div className="prestamo-title">
                         <h2>{tipo}</h2>
@@ -318,6 +342,14 @@ function PrestamoCard({
                         {indiceGaleria + 1} / {fotos.length}
                     </span>
                 </div>
+            )}
+
+            {detalleAbierto && (
+                <DetalleArriendo
+                    prestamo={prestamo}
+                    onClose={() => setDetalleAbierto(false)}
+                    onVerFoto={(indice) => setIndiceGaleria(indice)}
+                />
             )}
         </article>
     );

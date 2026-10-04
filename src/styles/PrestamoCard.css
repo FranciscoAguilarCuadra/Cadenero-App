@@ -168,7 +168,14 @@
 
 .prestamo-details {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 7px;
+}
+
+.prestamo-estados {
+    display: flex;
+    align-items: center;
     gap: 7px;
 }
 
@@ -217,6 +224,11 @@
 .day-progress.neutral {
     background: #f3f4f6;
     color: #4b5563;
+}
+
+.day-progress.dano {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .prestamo-details .sync-pending {

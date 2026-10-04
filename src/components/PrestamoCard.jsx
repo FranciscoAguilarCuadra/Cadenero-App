@@ -7,6 +7,7 @@ import {
     FaChevronRight,
     FaCloudUploadAlt,
     FaEdit,
+    FaExclamationTriangle,
     FaMoneyBillWave,
     FaRedo,
     FaTimes,
@@ -223,12 +224,8 @@ function PrestamoCard({
 
                     <div className="prestamo-meta-actions">
                         <div className="prestamo-badges">
-                            <span className={estaDevuelto ? "status returned" : "status active"}>
-                                {estaDevuelto ? "Devuelto" : "Activo"}
-                            </span>
-
-                            {prestamo.danioPrevio && (
-                                <span className="status damage">Daño previo</span>
+                            {estaDevuelto && (
+                                <span className="status returned">Devuelto</span>
                             )}
                         </div>
 
@@ -251,10 +248,19 @@ function PrestamoCard({
                         {prestamo.pago}
                     </p>
 
-                    <p className={`day-progress ${progresoDias.clase}`}>
-                        <FaCalendarAlt />
-                        {progresoDias.texto}
-                    </p>
+                    <div className="prestamo-estados">
+                        {prestamo.danioPrevio && (
+                            <p className="day-progress dano">
+                                <FaExclamationTriangle />
+                                Daño previo
+                            </p>
+                        )}
+
+                        <p className={`day-progress ${progresoDias.clase}`}>
+                            <FaCalendarAlt />
+                            {progresoDias.texto}
+                        </p>
+                    </div>
 
                     {pendiente && (
                         <p className="sync-pending">

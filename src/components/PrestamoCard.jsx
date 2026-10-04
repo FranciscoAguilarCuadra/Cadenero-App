@@ -223,12 +223,6 @@ function PrestamoCard({
                     </div>
 
                     <div className="prestamo-meta-actions">
-                        <div className="prestamo-badges">
-                            {estaDevuelto && (
-                                <span className="status returned">Devuelto</span>
-                            )}
-                        </div>
-
                         {onEliminar && (
                             <button
                                 type="button"

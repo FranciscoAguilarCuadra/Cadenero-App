@@ -8,7 +8,6 @@ import {
     FaCloudUploadAlt,
     FaEdit,
     FaExclamationTriangle,
-    FaMoneyBillWave,
     FaRedo,
     FaTimes,
     FaTrash,
@@ -237,11 +236,6 @@ function PrestamoCard({
                 </div>
 
                 <div className="prestamo-details">
-                    <p>
-                        <FaMoneyBillWave />
-                        {prestamo.pago}
-                    </p>
-
                     <div className="prestamo-estados">
                         {prestamo.danioPrevio && (
                             <p className="day-progress dano">

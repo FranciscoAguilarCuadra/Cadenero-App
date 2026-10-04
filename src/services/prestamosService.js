@@ -139,12 +139,26 @@ function desdeSupabase(prestamo) {
     };
 }
 
+async function obtenerUsuarioActualId() {
+    try {
+        const { data } = await supabase.auth.getSession();
+        return data?.session?.user?.id || null;
+    } catch (error) {
+        console.error("No se pudo identificar al usuario actual.", error);
+        return null;
+    }
+}
+
 async function haciaSupabase(prestamo) {
     const id = String(prestamo.id || Date.now());
     const fotosVehiculo = await subirFotosVehiculo(
         id,
         normalizarFotosVehiculo(prestamo)
     );
+    // Un arriendo sin dueño no puede guardarse: la base exige que pertenezca al
+    // usuario actual. Si el dueño falta (o quedó de otra sesión), se completa
+    // aquí; un dueño ya asignado se respeta siempre.
+    const usuarioActual = await obtenerUsuarioActualId();
 
     return {
         id,
@@ -156,7 +170,7 @@ async function haciaSupabase(prestamo) {
         fotos_vehiculo: fotosVehiculo,
         danio_previo: Boolean(prestamo.danioPrevio),
         estado: prestamo.estado || "Activo",
-        usuario_id: prestamo.usuarioId || null,
+        usuario_id: prestamo.usuarioId || usuarioActual || null,
         fecha_ingreso: prestamo.fechaIngreso || new Date().toISOString(),
         fecha_devolucion: prestamo.fechaDevolucion || null,
         fecha_actualizacion: new Date().toISOString(),

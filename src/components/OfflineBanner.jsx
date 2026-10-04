@@ -4,6 +4,7 @@ import { FaCloudUploadAlt } from "react-icons/fa";
 import { isOnline, onConnectivityChange } from "../services/connectivity";
 import {
     contarPendientes,
+    eliminarDeCola,
     onColaChange,
     obtenerCola,
 } from "../services/localCache";
@@ -58,6 +59,7 @@ export default function OfflineBanner() {
     const [sincronizadas, setSincronizadas] = useState(0);
     const [detalleAbierto, setDetalleAbierto] = useState(false);
     const [operaciones, setOperaciones] = useState([]);
+    const [confirmando, setConfirmando] = useState(null);
 
     const recalcularPendientes = useCallback(async () => {
         const cuenta = await contarPendientes();
@@ -74,6 +76,31 @@ export default function OfflineBanner() {
 
         setDetalleAbierto(true);
     }, []);
+
+    const cerrarDetalle = useCallback(() => {
+        setDetalleAbierto(false);
+        setConfirmando(null);
+    }, []);
+
+    // Salida para un cambio que nunca podrá subirse: se elimina sin subirlo.
+    const descartarOperacion = useCallback(async () => {
+        const operacion = confirmando;
+
+        if (!operacion) return;
+
+        try {
+            await eliminarDeCola(operacion.operacionId);
+            setOperaciones((actuales) =>
+                actuales.filter(
+                    (item) => item.operacionId !== operacion.operacionId
+                )
+            );
+        } catch (error) {
+            console.error("No se pudo descartar el cambio pendiente.", error);
+        } finally {
+            setConfirmando(null);
+        }
+    }, [confirmando]);
 
     useEffect(() => {
         const unsubscribe = onConnectivityChange(setOnline);
@@ -159,42 +186,109 @@ export default function OfflineBanner() {
 
                         <div className="app-dialog-content">
                             <h2 id="detalle-pendientes-titulo">
-                                Cambios pendientes
+                                {confirmando
+                                    ? "Descartar cambio"
+                                    : "Cambios pendientes"}
                             </h2>
 
-                            <ul className="detalle-pendientes">
-                                {operaciones.map((operacion) => (
-                                    <li key={operacion.operacionId}>
+                            {confirmando ? (
+                                <>
+                                    <p className="detalle-pendientes-confirmacion">
                                         <strong>
-                                            {describirOperacion(operacion)}
+                                            {describirOperacion(confirmando)}
                                         </strong>
-                                        <span>{textoIntentos(operacion)}</span>
+                                        : este cambio se eliminará sin subirlo
+                                        nunca. No se puede deshacer.
+                                    </p>
 
-                                        {operacion.ultimoError && (
-                                            <small>
-                                                Último error:{" "}
-                                                {operacion.ultimoError}
-                                            </small>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
+                                    <p className="detalle-pendientes-nota">
+                                        Es la salida para un cambio que no puede
+                                        subirse, como uno que la base de datos
+                                        rechaza. Lo normal es dejar que se suba
+                                        solo.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    {operaciones.length === 0 ? (
+                                        <p className="detalle-pendientes-nota">
+                                            No hay cambios pendientes.
+                                        </p>
+                                    ) : (
+                                        <ul className="detalle-pendientes">
+                                            {operaciones.map((operacion) => (
+                                                <li key={operacion.operacionId}>
+                                                    <strong>
+                                                        {describirOperacion(
+                                                            operacion
+                                                        )}
+                                                    </strong>
+                                                    <span>
+                                                        {textoIntentos(
+                                                            operacion
+                                                        )}
+                                                    </span>
 
-                            <p className="detalle-pendientes-nota">
-                                Estos cambios están guardados en este teléfono y
-                                se subirán solos cuando haya conexión. Nada se
-                                descarta.
-                            </p>
+                                                    {operacion.ultimoError && (
+                                                        <small>
+                                                            Último error:{" "}
+                                                            {operacion.ultimoError}
+                                                        </small>
+                                                    )}
+
+                                                    <button
+                                                        type="button"
+                                                        className="detalle-pendientes-descartar"
+                                                        onClick={() =>
+                                                            setConfirmando(
+                                                                operacion
+                                                            )
+                                                        }
+                                                    >
+                                                        Descartar este cambio
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+
+                                    <p className="detalle-pendientes-nota">
+                                        Estos cambios están guardados en este
+                                        teléfono y se subirán solos cuando haya
+                                        conexión. Nada se descarta solo.
+                                    </p>
+                                </>
+                            )}
                         </div>
 
                         <div className="app-dialog-actions">
-                            <button
-                                type="button"
-                                className="app-dialog-button app-dialog-button-primary"
-                                onClick={() => setDetalleAbierto(false)}
-                            >
-                                Cerrar
-                            </button>
+                            {confirmando ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="app-dialog-button app-dialog-button-secondary"
+                                        onClick={() => setConfirmando(null)}
+                                    >
+                                        Volver
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="app-dialog-button app-dialog-button-primary"
+                                        onClick={descartarOperacion}
+                                    >
+                                        Sí, descartar
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="app-dialog-button app-dialog-button-primary"
+                                    onClick={cerrarDetalle}
+                                >
+                                    Cerrar
+                                </button>
+                            )}
                         </div>
                     </section>
                 </div>

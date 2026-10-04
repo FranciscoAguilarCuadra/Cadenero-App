@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from "./supabase";
 import { isOnline, onConnectivityChange } from "./services/connectivity";
 import { sincronizarCola } from "./services/syncService";
 import {
+    fijarCuentaActiva,
     guardarMeta,
     obtenerCola,
     obtenerMeta,
@@ -101,6 +102,12 @@ function App() {
             console.error("No se pudo leer la cola de sincronización.", error);
         }
     }, []);
+
+    // ─── Aislamiento por cuenta ──────────────────────
+    // La cola del equipo se abre por cuenta: cada uno ve y sube lo suyo.
+    useEffect(() => {
+        fijarCuentaActiva(perfil);
+    }, [perfil]);
 
     useEffect(() => {
         if (!isSupabaseConfigured) return undefined;

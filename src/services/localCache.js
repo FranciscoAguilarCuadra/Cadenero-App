@@ -55,6 +55,39 @@ function notificarCambioCola() {
     listenersCola.forEach((fn) => fn());
 }
 
+// ─── Cuenta activa: aislamiento por cuenta ─────────
+
+// La cola vive en el equipo, no en la cuenta. Lo que se muestra, se cuenta y se
+// sincroniza es solo de la cuenta con sesión abierta: un cadenero nunca ve ni
+// toca los cambios pendientes de otra cuenta. Los registros sin cuenta asignada
+// (creados por versiones anteriores) los ve y los sube únicamente un admin.
+let cuentaActiva = null;
+
+export function fijarCuentaActiva(cuenta) {
+    cuentaActiva =
+        cuenta && cuenta.id != null
+            ? { id: String(cuenta.id), esAdmin: cuenta.rol === "admin" }
+            : null;
+
+    notificarCambioCola();
+}
+
+function duenoDeLaOperacion(operacion) {
+    const dueno = operacion?.usuarioId ?? operacion?.datos?.usuarioId ?? null;
+
+    return dueno == null ? null : String(dueno);
+}
+
+function esDeLaCuentaActiva(operacion) {
+    if (!cuentaActiva) return false;
+
+    const dueno = duenoDeLaOperacion(operacion);
+
+    if (dueno != null) return dueno === cuentaActiva.id;
+
+    return cuentaActiva.esAdmin;
+}
+
 // ─── Prestamos ─────────────────────────────────────
 
 export async function guardarPrestamosLocal(prestamos) {
@@ -102,6 +135,8 @@ export async function sincronizarPrestamosLocales(prestamos) {
     const storeCola = tx.objectStore(STORE_COLA);
 
     const locales = await storePrestamos.getAll();
+    // La cola se lee sin filtrar por cuenta: aquí no se decide qué se ve, se
+    // evita borrar un arriendo que otra cuenta todavía no ha subido.
     const operaciones = await storeCola.getAll();
 
     const idsRemotos = new Set(prestamos.map((prestamo) => String(prestamo.id)));
@@ -142,9 +177,12 @@ export async function cargarPrestamosLocal() {
 export async function encolarOperacion(operacion) {
     const db = await getDB();
     const id = `op-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const dueno =
+        duenoDeLaOperacion(operacion) ?? cuentaActiva?.id ?? null;
     const entrada = {
         operacionId: id,
         ...operacion,
+        usuarioId: dueno,
         timestamp: Date.now(),
         estado: "pendiente",
         intentos: 0,
@@ -162,7 +200,9 @@ export async function encolarOperacion(operacion) {
 export async function obtenerCola() {
     const db = await getDB();
     const todos = await db.getAll(STORE_COLA);
-    return todos.sort((a, b) => a.timestamp - b.timestamp);
+    return todos
+        .filter(esDeLaCuentaActiva)
+        .sort((a, b) => a.timestamp - b.timestamp);
 }
 
 export async function eliminarDeCola(operacionId) {
@@ -178,8 +218,8 @@ export async function actualizarOperacionCola(operacion) {
 }
 
 export async function contarPendientes() {
-    const db = await getDB();
-    return db.count(STORE_COLA);
+    const cola = await obtenerCola();
+    return cola.length;
 }
 
 // ─── Meta (perfil, config) ─────────────────────────

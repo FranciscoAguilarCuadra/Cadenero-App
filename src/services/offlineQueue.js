@@ -13,6 +13,7 @@ export async function crearPrestamoOffline(prestamo) {
     await encolarOperacion({
         tipo: "crear",
         datos: prestamo,
+        usuarioId: prestamo.usuarioId ?? null,
     });
     return prestamo;
 }
@@ -22,6 +23,7 @@ export async function editarPrestamoOffline(prestamo) {
     await encolarOperacion({
         tipo: "editar",
         datos: prestamo,
+        usuarioId: prestamo.usuarioId ?? null,
     });
     return prestamo;
 }
@@ -38,6 +40,7 @@ export async function devolverPrestamoOffline(prestamo) {
     await encolarOperacion({
         tipo: "devolver",
         datos: { id: prestamo.id },
+        usuarioId: actualizado.usuarioId ?? null,
     });
     return actualizado;
 }
@@ -54,6 +57,7 @@ export async function reactivarPrestamoOffline(prestamo) {
     await encolarOperacion({
         tipo: "reactivar",
         datos: { id: prestamo.id },
+        usuarioId: actualizado.usuarioId ?? null,
     });
     return actualizado;
 }
@@ -66,5 +70,6 @@ export async function eliminarPrestamoOffline(prestamo) {
             id: prestamo.id,
             fotos: prestamo.fotosVehiculo || [],
         },
+        usuarioId: prestamo.usuarioId ?? null,
     });
 }
